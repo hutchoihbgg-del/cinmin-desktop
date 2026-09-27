@@ -1,23 +1,22 @@
-// main.js — boot Cinmin Desktop
+// main.js — boot Cinmin Desktop (0.5: AppRegistry + Notifications + Persistence)
 
 import './styles/desktop.css';
 import './styles/windows.css';
 import './styles/explorer.css';
 
 import { events } from './core/EventBus.js';
+import { getApp } from './core/AppRegistry.js';
+import { notifier } from './core/NotificationManager.js';
 import { WindowManager } from './desktop/WindowManager.js';
 import { initDesktop } from './desktop/Desktop.js';
-import { createFileExplorerContent } from './apps/FileExplorer.js';
-import { createNotepadContent } from './apps/Notepad.js';
-import { createTerminalContent } from './apps/Terminal.js';
-import { createSettingsContent } from './apps/Settings.js';
-import { createHtmlViewerContent } from './apps/HtmlViewer.js';
 
-// apply saved theme/accent early
+// apply saved theme/accent/icon-size/animations early (Settings persistence)
 const savedTheme = localStorage.getItem('cinmin:theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
 const savedAccent = localStorage.getItem('cinmin:accent');
 if (savedAccent) document.documentElement.style.setProperty('--accent', savedAccent);
+document.documentElement.setAttribute('data-icon-size', localStorage.getItem('cinmin:iconSize') || 'medium');
+document.documentElement.setAttribute('data-animations', localStorage.getItem('cinmin:animations') || 'true');
 
 // init window manager
 const wm = new WindowManager(
@@ -25,40 +24,32 @@ const wm = new WindowManager(
   document.getElementById('taskbar-apps')
 );
 
-// app launchers
-const appFactories = {
-  explorer: () => ({ title: 'File Explorer', icon: '📁', content: createFileExplorerContent(), width: 720, height: 460 }),
-  terminal: () => ({ title: 'Terminal', icon: '💻', content: createTerminalContent(), width: 620, height: 400 }),
-  notepad: () => ({ title: 'Notepad', icon: '📝', content: createNotepadContent(), width: 600, height: 420 }),
-  htmlviewer: () => ({ title: 'Browser', icon: '🌐', content: createHtmlViewerContent(), width: 800, height: 520 }),
-  settings: () => ({ title: 'Settings', icon: '⚙', content: createSettingsContent(), width: 560, height: 480 }),
-};
-
 let cascade = 0;
 function launch(appId, payload) {
-  const factory = appFactories[appId];
-  if (!factory) return;
-  // stagger windows
+  const app = getApp(appId);
+  if (!app) { notifier.error(`Unknown app: ${appId}`, 'Launch'); return; }
   const offset = (cascade % 4) * 24;
   cascade++;
-  let opts = factory();
-  // if opening a file in notepad via file:open
-  if (appId === 'notepad' && payload && typeof payload === 'string') {
-    opts.content = createNotepadContent(payload);
-    opts.title = `Notepad — ${payload.split('/').pop()}`;
+  // use factory with payload if present
+  let content, title = app.title;
+  if (payload && app.createWith) {
+    content = app.createWith(payload);
+    title = `${app.title} — ${String(payload).split('/').pop()}`;
+  } else {
+    content = app.create();
   }
-  if (appId === 'htmlviewer' && payload && typeof payload === 'string') {
-    opts.content = createHtmlViewerContent(payload);
-    opts.title = `Browser — ${payload.split('/').pop()}`;
-  }
-  opts.x = 70 + offset;
-  opts.y = 50 + offset;
-  return wm.create(opts);
+  // simple loading state: show spinner briefly if content is heavy
+  // (browser does its own loading)
+  return wm.create({ title, icon: app.icon, contentEl: content, width: app.width, height: app.height, x: 70 + offset, y: 50 + offset });
 }
 
 events.on('app:launch', (appId) => launch(appId));
 events.on('file:open', (path) => launch('notepad', path));
 events.on('html:open', (path) => launch('htmlviewer', path));
+events.on('notification:new', () => {}); // keep notifier alive
+// global error hook
+window.addEventListener('error', (e) => notifier.error(e.message || 'Unknown error', 'System'));
+window.addEventListener('unhandledrejection', (e) => notifier.error(e.reason?.message || String(e.reason), 'System'));
 
 initDesktop();
 

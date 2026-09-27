@@ -110,6 +110,54 @@
 .browser-error.hidden { display: none; }
 .browser-status { padding: 5px 10px; font-size: 11px; opacity: 0.6; border-top: 1px solid var(--border); background: var(--glass); color: var(--text); }
 
+/* 0.5 additions */
+.notepad-dirty { color: #f87171; font-size: 14px; margin-left: 6px; }
+.notepad-dirty.hidden { display: none; }
+[data-animations="false"] .window { animation: none !important; transition: none !important; }
+[data-animations="false"] .window.closing,
+[data-animations="false"] .window.opening,
+[data-animations="false"] .window.minimizing { animation: none !important; }
+
+.browser-blocked { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: #fef3c7; color: #92400e; padding: 24px; text-align: center; }
+.browser-blocked.hidden { display: none; }
+.blocked-icon { font-size: 28px; }
+.blocked-link { color: #7c3aed; word-break: break-all; }
+.browser-bookmarks { position: absolute; top: 0; right: 0; width: 220px; bottom: 0; background: #1e1b2e; border-left: 1px solid rgba(255,255,255,0.08); padding: 8px; overflow-y: auto; z-index: 2; }
+.browser-bookmarks.hidden { display: none; }
+.bm-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #a78bfa; margin-bottom: 8px; }
+.bm-row { display: flex; gap: 4px; margin-bottom: 4px; }
+.bm-go { flex: 1; background: rgba(255,255,255,0.06); border: none; color: #e5e7eb; padding: 6px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bm-go:hover { background: rgba(139,92,246,0.2); }
+.bm-del { background: transparent; border: none; color: #f87171; cursor: pointer; padding: 4px; }
+
+#toast-container { position: fixed; top: 12px; right: 12px; z-index: 200; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { background: #1e1b2e; border: 1px solid rgba(139,92,246,0.3); color: #e9d5ff; padding: 10px 14px; border-radius: 10px; min-width: 240px; max-width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 2px; animation: toastIn 0.2s ease; }
+.toast.toast-error { border-color: #f87171; }
+.toast.toast-success { border-color: #4ade80; }
+.toast small { font-size: 10px; opacity: 0.6; }
+.toast.out { animation: toastOut 0.25s ease forwards; }
+@keyframes toastIn { from { opacity:0; transform: translateX(12px); } to { opacity:1; transform:none; } }
+@keyframes toastOut { to { opacity:0; transform: translateX(12px); } }
+
+.notif-center { position: fixed; top: 12px; right: 12px; width: 320px; max-height: 70vh; background: #1a1625; border: 1px solid rgba(139,92,246,0.25); border-radius: 12px; z-index: 199; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 16px 48px rgba(0,0,0,0.5); }
+.notif-center.hidden { display: none; }
+.notif-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px; font-weight: 600; color: #e9d5ff; }
+.notif-header button { background: rgba(255,255,255,0.08); border: none; color: #e9d5ff; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; }
+#notif-list { overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.notif-row { background: rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; }
+.notif-title { font-size: 12px; font-weight: 600; color: #f5f3ff; display: flex; justify-content: space-between; }
+.notif-time { font-weight: 400; opacity: 0.6; font-size: 10px; }
+.notif-body { font-size: 11px; color: #d1d5db; margin-top: 2px; }
+.notif-empty { text-align: center; padding: 20px; color: #9ca3af; font-size: 12px; }
+.tray-bell { background: transparent; border: none; color: #c4b5fd; cursor: pointer; position: relative; padding: 4px 6px; font-size: 14px; }
+#notif-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 9px; padding: 1px 4px; border-radius: 8px; }
+#notif-badge.hidden { display: none; }
+
+[data-icon-size="small"] .desktop-icon { width: 64px; }
+[data-icon-size="small"] .desktop-icon .d-icon { font-size: 30px; }
+[data-icon-size="large"] .desktop-icon { width: 92px; }
+[data-icon-size="large"] .desktop-icon .d-icon { font-size: 46px; }
+
 /* context menus (used by desktop, explorer, taskbar) */
 .ctx-menu {
   position: fixed; z-index: 100;

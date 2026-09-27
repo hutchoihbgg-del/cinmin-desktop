@@ -220,6 +220,11 @@ export class WindowManager {
   close(id) {
     const e = this.windows.get(id);
     if (!e) return;
+    // 0.5: check unsaved indicator (Notepad)
+    const content = e.el.querySelector('.window-content > *');
+    if (content && content._isDirty && content._isDirty()) {
+      if (!confirm('Unsaved changes — close anyway?')) return;
+    }
     e.el.classList.add('closing');
     e.taskBtn?.classList.add('closing');
     setTimeout(() => {

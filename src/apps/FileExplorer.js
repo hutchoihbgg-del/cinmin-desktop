@@ -1,6 +1,7 @@
-// FileExplorer.js — file browser using shared fs (polished for 0.2)
+// FileExplorer.js — 0.5: copy/cut/paste, properties, keyboard shortcuts
 
 import { fs } from '../core/FileSystem.js';
+import { notifier } from '../core/NotificationManager.js';
 
 export function createFileExplorerContent() {
   const wrap = document.createElement('div');
@@ -130,6 +131,7 @@ export function createFileExplorerContent() {
       el.addEventListener('click', () => {
         grid.querySelectorAll('.file-item').forEach(i => i.classList.remove('selected'));
         el.classList.add('selected');
+        selectedName = item.name;
       });
       el.addEventListener('dblclick', () => {
         const next = currentPath.replace(/\/$/, '') + '/' + item.name;
@@ -147,6 +149,8 @@ export function createFileExplorerContent() {
     status.textContent = `${currentPath} — ${items.length} item${items.length!==1?'s':''}`;
   }
 
+  let selectedName = null; // for keyboard shortcuts
+
   function showFileMenu(x, y, item) {
     closeMenus();
     const fullPath = currentPath.replace(/\/$/, '') + '/' + item.name;
@@ -158,6 +162,8 @@ export function createFileExplorerContent() {
     menu.innerHTML = `
       <button data-action="open">${isFolder ? '📂 Open' : '📄 Open'}</button>
       <div class="ctx-sep"></div>
+      <button data-action="copy">⎘ Copy</button>
+      <button data-action="cut">✂ Cut</button>
       <button data-action="rename">✎ Rename</button>
       <button data-action="delete" class="danger">🗑 Delete</button>
       <div class="ctx-sep"></div>
@@ -166,26 +172,30 @@ export function createFileExplorerContent() {
     document.body.appendChild(menu);
     clampMenu(menu);
     menu.querySelector('[data-action="open"]').addEventListener('click', () => { menu.remove(); navigate(fullPath); });
+    menu.querySelector('[data-action="copy"]').addEventListener('click', () => { fs.copy(fullPath); notifier.success(`Copied ${item.name}`, 'Files'); menu.remove(); render(); });
+    menu.querySelector('[data-action="cut"]').addEventListener('click', () => { fs.cut(fullPath); notifier.success(`Cut ${item.name}`, 'Files'); menu.remove(); render(); });
     menu.querySelector('[data-action="rename"]').addEventListener('click', () => {
       menu.remove();
       const nn = prompt('New name:', item.name);
       if (nn && nn !== item.name) {
         const r = fs.rename(fullPath, nn);
-        if (!r.ok) alert(r.error); else render();
+        if (!r.ok) { alert(r.error); notifier.error(r.error, 'Files'); } else { render(); notifier.success(`Renamed to ${nn}`, 'Files'); }
       }
     });
     menu.querySelector('[data-action="delete"]').addEventListener('click', () => {
       menu.remove();
       if (confirm(`Delete "${item.name}"?`)) {
         const r = fs.delete(fullPath);
-        if (!r.ok) alert(r.error); else render();
+        if (!r.ok) { alert(r.error); notifier.error(r.error, 'Files'); } else { render(); notifier.success(`Deleted ${item.name}`, 'Files'); }
       }
     });
     menu.querySelector('[data-action="properties"]').addEventListener('click', () => {
       menu.remove();
-      const node = fs._resolve(fullPath).node;
-      const size = node.type === 'file' ? (node.content?.length || 0) + ' chars' : Object.keys(node.children).length + ' items';
-      alert(`${item.name}\nType: ${item.type}\nPath: ${fullPath}\nSize: ${size}`);
+      const stat = fs.stat(fullPath);
+      const details = stat.type === 'file'
+        ? `Name: ${stat.name}\nType: File\nPath: ${fullPath}\nSize: ${stat.size} chars`
+        : `Name: ${stat.name}\nType: Folder\nPath: ${fullPath}\nItems: ${stat.size}`;
+      alert(details);
     });
     setTimeout(() => {
       const h = (e) => { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', h); } };
@@ -199,11 +209,15 @@ export function createFileExplorerContent() {
     menu.className = 'ctx-menu';
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
+    const hasClip = !!fs.clipboard;
     menu.innerHTML = `
       <button data-action="newFolder">📁 New Folder</button>
       <button data-action="newFile">📄 New Text File</button>
       <div class="ctx-sep"></div>
+      <button data-action="paste" ${hasClip ? '' : 'disabled'}>⎘ Paste ${hasClip ? `(${fs.clipboard.path.split('/').pop()})` : ''}</button>
+      <div class="ctx-sep"></div>
       <button data-action="refresh">↻ Refresh</button>
+      <button data-action="props">ℹ Properties</button>
     `;
     document.body.appendChild(menu);
     clampMenu(menu);
@@ -212,16 +226,27 @@ export function createFileExplorerContent() {
       const name = prompt('Folder name:', 'New Folder');
       if (!name) return;
       const r = fs.createFolder(currentPath, name);
-      if (!r.ok) alert(r.error); else render();
+      if (!r.ok) { alert(r.error); notifier.error(r.error, 'Files'); } else { render(); notifier.success(`Created folder ${name}`, 'Files'); }
     });
     menu.querySelector('[data-action="newFile"]').addEventListener('click', () => {
       menu.remove();
       const name = prompt('File name:', 'untitled.txt');
       if (!name) return;
       const r = fs.createFile(currentPath, name, '');
-      if (!r.ok) alert(r.error); else render();
+      if (!r.ok) { alert(r.error); notifier.error(r.error, 'Files'); } else { render(); notifier.success(`Created ${name}`, 'Files'); }
+    });
+    const pasteBtn = menu.querySelector('[data-action="paste"]');
+    if (hasClip) pasteBtn.addEventListener('click', () => {
+      const r = fs.paste(currentPath);
+      menu.remove();
+      if (!r.ok) { alert(r.error); notifier.error(r.error, 'Files'); } else { render(); notifier.success(`Pasted ${r.name}`, 'Files'); }
     });
     menu.querySelector('[data-action="refresh"]').addEventListener('click', () => { menu.remove(); render(); });
+    menu.querySelector('[data-action="props"]').addEventListener('click', () => {
+      menu.remove();
+      const stat = fs.stat(currentPath);
+      alert(`Path: ${currentPath}\nType: Folder\nItems: ${stat ? stat.size : 0}`);
+    });
     setTimeout(() => {
       const h = (e) => { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', h); } };
       document.addEventListener('click', h);
@@ -275,6 +300,11 @@ export function createFileExplorerContent() {
   });
   wrap.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key.toLowerCase() === 'l') { e.preventDefault(); pathInput.focus(); pathInput.select(); }
+    if (e.ctrlKey && e.key.toLowerCase() === 'c' && selectedName) { e.preventDefault(); const p=currentPath.replace(/\/$/,'')+'/'+selectedName; fs.copy(p); notifier.success(`Copied ${selectedName}`, 'Files'); }
+    if (e.ctrlKey && e.key.toLowerCase() === 'x' && selectedName) { e.preventDefault(); const p=currentPath.replace(/\/$/,'')+'/'+selectedName; fs.cut(p); notifier.success(`Cut ${selectedName}`, 'Files'); render(); }
+    if (e.ctrlKey && e.key.toLowerCase() === 'v') { e.preventDefault(); const r=fs.paste(currentPath); if(!r.ok){ notifier.error(r.error,'Files'); } else { render(); notifier.success(`Pasted ${r.name}`,'Files'); } }
+    if (e.key === 'Delete' && selectedName) { e.preventDefault(); const p=currentPath.replace(/\/$/,'')+'/'+selectedName; if(confirm(`Delete "${selectedName}"?`)){ const r=fs.delete(p); if(r.ok){ render(); selectedName=null; } } }
+    if (e.key === 'F2' && selectedName) { e.preventDefault(); const p=currentPath.replace(/\/$/,'')+'/'+selectedName; const nn=prompt('New name:', selectedName); if(nn && nn!==selectedName){ const r=fs.rename(p,nn); if(r.ok) render(); } }
   });
 
   render();
