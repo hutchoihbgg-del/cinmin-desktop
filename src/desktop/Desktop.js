@@ -47,21 +47,16 @@ export function initDesktop() {
       el.style.left = pos.x + 'px';
       el.style.top = pos.y + 'px';
 
-      // click handling: single selects, double opens
-      let clicks = 0, timer = null;
+      // click handling: single selects, double opens (use dblclick, not click counting)
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        clicks++;
-        if (clicks === 1) {
-          timer = setTimeout(() => { clicks = 0; }, 300);
-        } else if (clicks === 2) {
-          clearTimeout(timer); clicks = 0;
-          events.emit('app:launch', item.id);
-          // track recent
-          trackRecent(item.id);
-        }
         document.querySelectorAll('.desktop-icon').forEach(i => i.classList.remove('selected'));
         el.classList.add('selected');
+      });
+      el.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        events.emit('app:launch', item.id);
+        trackRecent(item.id);
       });
 
       // draggable icons
@@ -73,7 +68,7 @@ export function initDesktop() {
         sx = e.clientX; sy = e.clientY;
         ox = parseInt(el.style.left, 10); oy = parseInt(el.style.top, 10);
         el.style.zIndex = 10;
-        e.preventDefault();
+        // don't preventDefault here — it blocks click/dblclick
       });
       const onMove = (e) => {
         if (!dragging) return;
@@ -198,6 +193,23 @@ export function initDesktop() {
     }
   }
   startBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleStart(); });
+
+  // FIX: re-attach Start Menu app launch listeners (was removed in 0.2 rewrite)
+  function attachStartLaunchers() {
+    startAppsEl.querySelectorAll('.start-item').forEach(btn => {
+      // avoid double-binding
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', () => {
+        const app = btn.dataset.app;
+        startMenu.classList.add('hidden');
+        powerMenu?.classList.add('hidden');
+        events.emit('app:launch', app);
+        trackRecent(app);
+      });
+    });
+  }
+  attachStartLaunchers();
 
   // search
   function filterApps(q) {
