@@ -9,6 +9,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    rollupOptions: {
+      external: (id) => id === 'electron',
+    },
   },
   server: { port: 5173 },
   preview: { port: 4173 },

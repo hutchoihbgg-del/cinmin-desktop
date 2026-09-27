@@ -30,6 +30,17 @@ npm run build   # → dist/ (deploy this)
 npm run preview # preview prod build
 ```
 
+## Browser Engine (Cinmin 1.0)
+
+**Selected dependency: `electron@^30` — Chromium**
+- Why: Real Chromium BrowserView, same engine as Chrome, proper `X-Frame-Options`/`CSP` handling
+- Runtime: **Web fallback** (iframe, Vercel/browser) vs **Native** (Electron Node + Chromium binaries ~100MB)
+- Web/Vercel: `isNativeAvailable() === false` → `WebEngine` (iframe, respects CSP, graceful blocked page, `Use Web Fallback` button). Native unavailable message shown, never crashes.
+- Native: `isNativeAvailable() === true` (Electron `__CINMIN_NATIVE__`/`userAgent`) → `NativeEngine` via `BrowserView` (separate entry, not in Vite web bundle via `rollupOptions.external: ['electron']` + dynamic `import('electron')`)
+- Security: No CSP stripping, no `X-Frame-Options` bypass, no cookie theft, no FS exposure — `BrowserDownloads` only via explicit `fs.createFile('/Home/Downloads')`, no `postMessage` to arbitrary pages
+- Abstraction: `src/core/BrowserEngine.js` exposes `createBrowserView/navigate/back/forward/reload/stop/canGoBack/canGoForward/getCurrentUrl/destroy`, `BrowserDownloads`, `cinmin://error|home|history|bookmarks`
+- Build targets: `npm run build` (web, Vercel) always works; `npm run build:native` (native, requires Electron binaries)
+
 ## Features (0.8 — Plugin Ecosystem)
 
 - **App Registry** (`src/core/AppRegistry.js`): Single manifest, `getApp/listApps`, Start Menu queries it
