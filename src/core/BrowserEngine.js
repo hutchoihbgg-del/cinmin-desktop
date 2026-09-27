@@ -21,7 +21,7 @@ export function isNativeAvailable() {
 }
 
 export function getEngineType() {
-  return isNativeAvailable() ? 'Native' : 'Web Fallback';
+  return isNativeAvailable() ? 'Native' : 'Web Mode';
 }
 
 // Web Engine — iframe based (safe, respects X-Frame-Options)
@@ -145,27 +145,23 @@ class WebEngine {
   destroy() { this.iframe.remove(); }
 }
 
-// Native Engine stub — would use Electron BrowserView in real native build
+// Native Engine stub — only used when Electron is available (not on Chromebook/web)
+// On web this class is never instantiated — Web Mode is primary
 class NativeEngine {
   constructor(container, statusCb) {
     this.container = container;
     this.statusCb = statusCb;
     this.currentUrl = null;
-    // Show placeholder explaining native build separation
     const el = document.createElement('div');
     el.className = 'native-engine-placeholder';
     el.innerHTML = `
       <div style="padding:24px; text-align:center; color:#c4b5fd">
-        <div style="font-size:18px; font-weight:600">Cinmin Web Browser</div>
-        <div style="margin-top:8px; font-size:12px; opacity:0.8">Native browser engine unavailable in this build.</div>
-        <div style="margin-top:12px; font-size:11px; opacity:0.6">Web Fallback uses iframe (respects X-Frame-Options/CSP).</div>
-        <button class="b-btn" data-a="fallback" style="margin-top:12px">Use Web Fallback</button>
-        <div style="margin-top:12px; font-size:10px; opacity:0.5">Native build: npm run build:native (requires Electron)</div>
+        <div style="font-size:18px; font-weight:600">Cinmin Browser — Native</div>
+        <div style="margin-top:8px; font-size:12px">Chromium engine (Electron)</div>
       </div>
     `;
     this.placeholder = el;
     container.appendChild(el);
-    // Dynamically try to load native module only in Electron (never in web bundle)
     this._tryLoadNative();
   }
   async _tryLoadNative() {

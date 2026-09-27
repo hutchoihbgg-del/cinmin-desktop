@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port 5173 --open",
     "build": "vite build",
+    "build:web": "vite build",
     "build:native": "vite build --mode native",
     "preview": "vite preview"
   },

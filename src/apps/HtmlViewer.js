@@ -21,7 +21,7 @@ export function createHtmlViewerContent(initialPath = null) {
       <div class="browser-address">
         <span class="addr-icon">🌐</span>
         <input class="addr-input" placeholder="example.com or /Home/index.html" aria-label="Address bar" />
-        <span class="engine-badge" title="Engine">${getEngineType()}</span>
+        <span class="engine-badge" title="Engine">Web Mode</span>
       </div>
       <button class="b-btn" data-action="bookmark" title="Bookmark">☆</button>
       <button class="b-btn" data-action="bookmarks" title="Bookmarks">☰</button>
@@ -31,25 +31,21 @@ export function createHtmlViewerContent(initialPath = null) {
       <div class="browser-engine-host"></div>
       <div class="browser-placeholder">
         <div style="font-size:32px">🌐</div>
-        <div><b>Cinmin Browser</b> <small style="opacity:0.6">(${getEngineType()})</small></div>
+        <div><b>Cinmin Browser</b> <small style="opacity:0.6">Web Mode</small></div>
         <div class="hint">Try: <code>example.com</code> → <code>https://example.com</code>, or <code>hello world</code> → search</div>
-        ${isNativeAvailable() ? '' : '<div class="hint" style="opacity:0.7">Web Fallback: iframe (respects X-Frame-Options/CSP)</div>'}
-        <div class="engine-note ${isNativeAvailable() ? 'hidden' : ''}" style="margin-top:10px; padding:10px; background:#1e1b2e; border-radius:8px; font-size:11px; color:#c4b5fd">
-          Native engine unavailable in this build.<br>
-          <button class="b-btn" data-action="useFallback">Use Web Fallback</button>
-        </div>
+        <div class="hint" style="opacity:0.7">Bookmarks, history, home — all inside Cinmin</div>
       </div>
       <div class="browser-error hidden"></div>
       <div class="browser-blocked hidden">
         <div class="blocked-icon">🚫</div>
-        <div><b>Cannot display this page</b></div>
-        <div class="hint">Site blocks embedding (X-Frame-Options/CSP).</div>
-        <div class="hint"><a class="blocked-link" target="_blank" rel="noopener">Open in new tab</a></div>
+        <div><b>Website can't be embedded</b></div>
+        <div class="hint">This site prevents iframe access.</div>
+        <div class="hint"><a class="blocked-link" target="_blank" rel="noopener">Open in Chrome</a></div>
         <button class="b-btn blocked-retry">Retry</button>
       </div>
       <div class="browser-bookmarks hidden"></div>
     </div>
-    <div class="browser-status">Ready — ${getEngineType()}</div>
+    <div class="browser-status">Ready — Web Mode</div>
   `;
 
   const input = wrap.querySelector('.addr-input');

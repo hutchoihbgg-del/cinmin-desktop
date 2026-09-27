@@ -56,8 +56,14 @@ window.addEventListener('unhandledrejection', (e) => notifier.error(e.reason?.me
 
 initDesktop();
 
-// keyboard shortcuts
+// PWA — installable, offline shell (Chromebook)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+// keyboard shortcuts — only when Cinmin has focus (Chromebook safe)
 document.addEventListener('keydown', (e) => {
+  const focusedInside = document.getElementById('app')?.contains(document.activeElement) || document.hasFocus();
+  if (!focusedInside && e.key !== 'Escape') return;
   if (e.altKey && e.key === 'Tab') { e.preventDefault(); wm.focusNext(); }
   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') { e.preventDefault(); launch('terminal'); }
   if (e.key === 'Escape') { /* close start is handled in Desktop.js */ }
