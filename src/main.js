@@ -11,6 +11,19 @@ import { pluginManager } from './core/PluginManager.js';
 import { WindowManager } from './desktop/WindowManager.js';
 import { initDesktop } from './desktop/Desktop.js';
 
+// first-run migration (1.2): never wipe existing keys, just stamp schema version
+try {
+  const SCHEMA = '1.2.0';
+  const cur = localStorage.getItem('cinmin:appSchemaVersion');
+  if (!cur) localStorage.setItem('cinmin:appSchemaVersion', SCHEMA);
+  else if (cur !== SCHEMA) localStorage.setItem('cinmin:appSchemaVersion', SCHEMA);
+} catch {}
+// per-app isolated storage helper: cinmin:app:<id>:<key>
+window.cinminAppStore = (id) => ({
+  get: (k, fb = null) => { try { const r = localStorage.getItem(`cinmin:app:${id}:${k}`); return r === null ? fb : JSON.parse(r); } catch { return fb; } },
+  set: (k, v) => { try { localStorage.setItem(`cinmin:app:${id}:${k}`, JSON.stringify(v)); } catch {} },
+});
+
 // apply saved theme/accent/icon-size/animations early (Settings persistence)
 const savedTheme = localStorage.getItem('cinmin:theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);

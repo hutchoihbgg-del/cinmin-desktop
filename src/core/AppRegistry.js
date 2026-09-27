@@ -1,57 +1,41 @@
-// AppRegistry.js — single source of truth for Cinmin apps (beginner-friendly)
-// Axiom: keep registry as plain data, no magic.
+// AppRegistry.js — single source of truth for Cinmin apps (1.2 builtin + plugin)
+// Builtins come from src/apps/builtin/manifest.js (repo is source, bundled at build).
+// Plugins register separately; builtin IDs are reserved.
 
-import { createFileExplorerContent } from '../apps/FileExplorer.js';
-import { createNotepadContent } from '../apps/Notepad.js';
-import { createTerminalContent } from '../apps/Terminal.js';
-import { createSettingsContent } from '../apps/Settings.js';
-import { createHtmlViewerContent } from '../apps/HtmlViewer.js';
+import { BUILTIN_APPS, CINMIN_VERSION } from '../apps/builtin/manifest.js';
 
-export const APPS = {
-  explorer: {
-    id: 'explorer',
-    title: 'File Explorer',
-    icon: '📁',
-    cat: 'places',
-    width: 720, height: 460,
-    create: () => createFileExplorerContent(),
-    createWith: (payload) => createFileExplorerContent(payload),
-  },
-  terminal: {
-    id: 'terminal',
-    title: 'Terminal',
-    icon: '💻',
-    cat: 'admin',
-    width: 620, height: 400,
-    create: () => createTerminalContent(),
-  },
-  notepad: {
-    id: 'notepad',
-    title: 'Notepad',
-    icon: '📝',
-    cat: 'office',
-    width: 600, height: 420,
-    create: () => createNotepadContent(),
-    createWith: (path) => createNotepadContent(path),
-  },
-  htmlviewer: {
-    id: 'htmlviewer',
-    title: 'Browser',
-    icon: '🌐',
-    cat: 'internet',
-    width: 800, height: 520,
-    create: () => createHtmlViewerContent(),
-    createWith: (path) => createHtmlViewerContent(path),
-  },
-  settings: {
-    id: 'settings',
-    title: 'Settings',
-    icon: '⚙',
-    cat: 'admin',
-    width: 560, height: 480,
-    create: () => createSettingsContent(),
-  },
-};
+export const APPS = { ...BUILTIN_APPS };
+export { CINMIN_VERSION };
 
+// lifecycle: apps expose create()/mount()/destroy() optionally; WindowManager owns the window.
 export function getApp(id) { return APPS[id] || null; }
 export function listApps() { return Object.values(APPS); }
+export function getBuiltinApps() { return Object.values(APPS).filter(a => a.source === 'builtin'); }
+export function isBuiltin(id) { return !!APPS[id]?.builtin; }
+
+export function registerBuiltinApp(def) {
+  if (APPS[def.id]) throw new Error(`App ID already registered: ${def.id}`);
+  APPS[def.id] = { ...def, builtin: true, source: 'builtin' };
+  return APPS[def.id];
+}
+
+// Called by PluginManager for plugin apps — rejects builtin collisions.
+export function registerPluginApp(pluginId, appDef) {
+  if (APPS[appDef.id]?.builtin) {
+    throw new Error(`App ID already reserved by built-in application: ${appDef.id}`);
+  }
+  APPS[appDef.id] = {
+    id: appDef.id, name: appDef.name, title: appDef.name,
+    version: '1.0.0', description: `Provided by ${pluginId}.`,
+    icon: appDef.icon, category: appDef.category, cat: (appDef.category || 'other').toLowerCase(),
+    builtin: false, source: 'plugin', pluginId,
+    width: 500, height: 400,
+    create: appDef.create,
+  };
+  return APPS[appDef.id];
+}
+
+export function unregisterApp(id) {
+  if (APPS[id]?.builtin) throw new Error(`Cannot unregister built-in app: ${id}`);
+  delete APPS[id];
+}

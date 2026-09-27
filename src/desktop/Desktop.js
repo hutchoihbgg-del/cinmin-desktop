@@ -2,26 +2,23 @@
 
 import { events } from '../core/EventBus.js';
 import { fs } from '../core/FileSystem.js';
+import { listApps, getApp } from '../core/AppRegistry.js';
 
-// Exactly as in screenshot: Computer, Home, Trash, Firefox Web Browser
+// Desktop shortcuts (persisted positions, never reset on update)
 const ICONS = [
   { id: 'explorer', label: 'Computer', icon: '🖥️', sublabel: '' },
   { id: 'explorer', label: 'Home', icon: '🏠', sublabel: '' },
   { id: 'explorer', label: 'Trash', icon: '🗑️', sublabel: '' },
   { id: 'htmlviewer', label: 'Firefox Web', sublabel: 'Browser', icon: '🦊' },
+  { id: 'explorer', label: 'Files', icon: '📁', sublabel: '' },
 ];
 
-// Mint categories -> apps (real Cinmin apps mapped)
-const MINT_APPS = [
-  { name: 'Firefox Web Browser', cat: 'internet', icon: '🦊', app: 'htmlviewer' },
-  { name: 'LibreOffice Writer', cat: 'office', icon: '📝', app: 'notepad' },
-  { name: 'LibreOffice Calc', cat: 'office', icon: '📊', app: 'notepad' },
-  { name: 'Terminal', cat: 'admin', icon: '>_', app: 'terminal' },
-  { name: 'Files', cat: 'places', icon: '📁', app: 'explorer' },
-  { name: 'Settings', cat: 'admin', icon: '⚙', app: 'settings' },
-  { name: 'Software Manager', cat: 'admin', icon: '🧩', app: 'settings' },
-  { name: 'Text Editor', cat: 'office', icon: '📄', app: 'notepad' },
-];
+// Start Menu reads AppRegistry (single source of truth)
+function registryMenuItems() {
+  return listApps()
+    .filter(a => a.id !== 'browser' || true) // keep both browser/htmlviewer
+    .map(a => ({ name: a.title === 'File Explorer' ? 'Files' : a.title, cat: (a.cat || 'other').toLowerCase(), icon: a.icon, app: a.id }));
+}
 
 export function initDesktop() {
   const desktopEl = document.getElementById('desktop');
@@ -130,6 +127,7 @@ export function initDesktop() {
   }
   function renderMintApps(){
     appsEl.innerHTML='';
+    const MINT_APPS = registryMenuItems();
     let list = MINT_APPS.filter(a => {
       const matchCat = activeCat==='all' || a.cat===activeCat || (activeCat==='recent' && false);
       const matchSearch = !searchQuery || a.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -138,8 +136,7 @@ export function initDesktop() {
     // Recent pseudo-category: show trackRecent apps
     if(activeCat==='recent'){
       let ids=[]; try{ids=JSON.parse(localStorage.getItem('cinmin:recent')||'[]')}catch{}
-      const map={explorer:'Files', terminal:'Terminal', notepad:'Text Editor', htmlviewer:'Firefox Web Browser', settings:'Settings'};
-      list = ids.map(id=> MINT_APPS.find(a=>a.app===id) || { name: map[id]||id, icon:'◈', app:id, cat:'recent'}).filter(Boolean);
+      list = ids.map(id=> MINT_APPS.find(a=>a.app===id) || (()=>{ const g=getApp(id); return g ? { name:g.title, icon:g.icon, app:id, cat:'recent'} : null; })()).filter(Boolean);
       if(searchQuery) list=list.filter(a=>a.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
     // Places category: show filesystem places
@@ -253,7 +250,7 @@ export function initDesktop() {
     }catch{}
   }
   events.on('window:created', ({title})=>{
-    const map={'File Explorer':'explorer','Terminal':'terminal','Notepad':'notepad','Browser':'htmlviewer','Settings':'settings'};
-    if(map[title]) trackRecent(map[title]);
+    const found = listApps().find(a=>a.title===title);
+    if(found) trackRecent(found.id);
   });
 }

@@ -41,7 +41,36 @@ npm run preview # preview prod build
 - Abstraction: `src/core/BrowserEngine.js` exposes `createBrowserView/navigate/back/forward/reload/stop/canGoBack/canGoForward/getCurrentUrl/destroy`, `BrowserDownloads`, `cinmin://error|home|history|bookmarks`
 - Build targets: `npm run build` (web, Vercel) always works; `npm run build:native` (native, requires Electron binaries)
 
-## Features (0.8 — Plugin Ecosystem)
+## Built-in Applications
+
+Preloaded on first boot — no install, no download, work offline. Source: `src/apps/builtin/` (bundled at build time, no runtime GitHub fetch).
+
+| App | Version | Category |
+|-----|---------|----------|
+| Calculator 🧮 | 1.0.0 | Accessories |
+| Browser 🌐 | 1.0.0 | Internet |
+| Terminal 💻 | 1.0.0 | Accessories |
+| Files 📁 | 1.0.0 | Places |
+| Notepad 📝 | 1.0.0 | Accessories |
+| Settings ⚙ | 1.0.0 | Administration |
+| Software Manager 🛍 | 1.0.0 | Administration |
+| Vish ◈ | 1.0.0 | Accessories |
+
+- Builtins show **Included** in Software Manager (no Install button).
+- Plugin apps show `source: "plugin"`; builtins `source: "builtin"`. Plugin registering a builtin ID is rejected: `App ID already reserved by built-in application.`
+- Per-app storage: `cinmin:app:<id>:<key>` via the Storage wrapper.
+- Schema migration: `cinmin:appSchemaVersion` (1.2.0) — existing `cinmin:fs`, `cinmin:iconPos`, `cinmin:recent`, `cinmin:plugins` are never wiped.
+- Future: `apps/<name>/manifest.json + app.js` bundles and `.capp` packages will plug into the same registry.
+
+## Native Applications
+
+`native-apps/` holds references for native Linux/Flatpak environments only.
+
+- `io.github.lluciocc.Vish.flatpakref` is a Flatpak **reference**, not an executable — it **cannot** run inside the Chromebook web build.
+- Requires compatible Linux + Flatpak + the referenced remote.
+- Web Vish (`src/apps/builtin/Vish.js`) is the offline-safe frontend inside Cinmin.
+
+## Features (1.2 — Preloaded Apps + 0.8 Plugin Ecosystem)
 
 - **App Registry** (`src/core/AppRegistry.js`): Single manifest, `getApp/listApps`, Start Menu queries it
 - **Notifications:** `success/info/warning/error` (✓/i/⚠/×), unread badge, per-item remove, persisted

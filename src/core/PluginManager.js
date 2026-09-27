@@ -156,8 +156,8 @@ export class PluginManager {
       // clean apps
       const apps = this.pluginApps.get(key) || [];
       try {
-        const { APPS } = await import('./AppRegistry.js');
-        apps.forEach(aid => delete APPS[aid]);
+        const { unregisterApp } = await import('./AppRegistry.js');
+        apps.forEach(aid => { try { unregisterApp(aid); } catch {} });
       } catch {}
       this.pluginApps.delete(key);
       // clean events
@@ -239,15 +239,21 @@ export class PluginManager {
       },
       apps: {
         register(appDef) {
-          // appDef: {id, name, icon, category, create}
-          import('./AppRegistry.js').then(({ APPS }) => {
-            APPS[appDef.id] = { id: appDef.id, title: appDef.name, icon: appDef.icon, cat: appDef.category || 'other', width: 500, height: 400, create: appDef.create || (() => { const d=document.createElement('div'); d.textContent='Plugin app: '+appDef.name; d.style.padding='20px'; return d; }) };
-            if (!self.pluginApps.has(pluginId)) self.pluginApps.set(pluginId, []);
-            self.pluginApps.get(pluginId).push(appDef.id);
+          // appDef: {id, name, icon, category, create} — builtin IDs reserved
+          import('./AppRegistry.js').then(({ registerPluginApp }) => {
+            try {
+              registerPluginApp(pluginId, appDef);
+              if (!self.pluginApps.has(pluginId)) self.pluginApps.set(pluginId, []);
+              self.pluginApps.get(pluginId).push(appDef.id);
+            } catch (e) {
+              console.warn(`Plugin ${pluginId} app rejected:`, e.message);
+            }
           });
         },
         unregister(appId) {
-          import('./AppRegistry.js').then(({ APPS }) => delete APPS[appId]);
+          import('./AppRegistry.js').then(({ unregisterApp }) => {
+            try { unregisterApp(appId); } catch {}
+          });
         }
       },
       files: {
