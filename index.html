@@ -9,71 +9,59 @@
   </head>
   <body>
     <div id="app">
-      <div id="wallpaper"></div>
+      <div id="wallpaper">
+        <!-- Mint LM logo center (like screenshot) -->
+        <div id="wallpaper-logo" aria-hidden="true">
+          <svg viewBox="0 0 100 100" width="220" height="220">
+            <path d="M18 18 H58 C79 18 86 26 86 46 V76 C86 96 78 86 58 86 H28 C8 86 2 78 2 58 V28 C2 18 6 18 18 18 Z"
+                  fill="none" stroke="#c084fc" stroke-width="8" stroke-linejoin="round" opacity="0.95"/>
+            <path d="M28 38 V72 H36 V48 L44 72 H48 L56 48 V72 H64 V38 H56 L46 60 L36 38 Z"
+                  fill="none" stroke="#c084fc" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+          </svg>
+        </div>
+      </div>
       <div id="desktop"></div>
       <div id="windows"></div>
 
-      <!-- Start menu — Linux Mint purple style -->
+      <!-- Start menu — exact Mint replica -->
       <div id="start-menu" class="hidden">
         <div class="mint-search">
           <span class="mint-search-icon">⌕</span>
-          <input id="start-search" type="text" placeholder="Search..." autocomplete="off" />
+          <input id="start-search" type="text" placeholder="Search applications..." autocomplete="off" />
         </div>
-        <div class="mint-layout">
-          <!-- Left sidebar (Mint-style) -->
-          <div class="mint-sidebar">
-            <div class="mint-user">
-              <div class="mint-avatar">◈</div>
-              <div>
-                <div class="mint-username">cinmin</div>
-                <div class="mint-host">cinmin@desktop</div>
-              </div>
-            </div>
-            <div class="mint-places">
-              <button class="mint-place" data-app="explorer"><span>🏠</span> Home</button>
-              <button class="mint-place" data-app="explorer"><span>📁</span> Documents</button>
-              <button class="mint-place" data-app="explorer"><span>📥</span> Downloads</button>
-              <button class="mint-place" data-app="explorer"><span>🖼</span> Pictures</button>
-            </div>
-            <div class="mint-recent-sidebar" id="start-recent">
-              <div class="mint-section-title">Recent</div>
-              <div id="start-recent-list"></div>
-            </div>
-            <div class="mint-power">
-              <div class="power-wrap">
-                <button id="power-btn" class="mint-power-btn">⏻ Power</button>
-                <div id="power-menu" class="power-menu hidden">
-                  <button data-power="shutdown">⏻ Shut Down</button>
-                  <button data-power="restart">↻ Restart</button>
-                </div>
-              </div>
-              <button id="mint-settings-btn" class="mint-power-btn secondary">⚙ Settings</button>
-            </div>
+        <div class="mint-body">
+          <div class="mint-cats" id="mint-cats">
+            <button class="mint-cat active" data-cat="all"><span class="cat-icon">⊞</span> All Applications</button>
+            <button class="mint-cat" data-cat="accessories"><span class="cat-icon">👤</span> Accessories</button>
+            <button class="mint-cat" data-cat="graphics"><span class="cat-icon">🎨</span> Graphics</button>
+            <button class="mint-cat" data-cat="internet"><span class="cat-icon">🌐</span> Internet</button>
+            <button class="mint-cat" data-cat="office"><span class="cat-icon">📄</span> Office</button>
+            <button class="mint-cat" data-cat="media"><span class="cat-icon">▶</span> Sound & Video</button>
+            <button class="mint-cat" data-cat="admin"><span class="cat-icon">⚙</span> Administration</button>
+            <button class="mint-cat" data-cat="prefs"><span class="cat-icon">🛠</span> Preferences</button>
+            <button class="mint-cat" data-cat="places"><span class="cat-icon">📁</span> Places</button>
+            <button class="mint-cat" data-cat="recent"><span class="cat-icon">🕓</span> Recent Files</button>
           </div>
-
-          <!-- Right app grid -->
-          <div class="mint-main">
-            <div class="mint-header">
-              <div class="start-logo">All Applications</div>
-              <div class="start-subtitle">Cinmin — Purple Mint</div>
-            </div>
-            <div class="start-apps" id="start-apps">
-              <button class="start-item" data-app="explorer"><span>📁</span> File Explorer</button>
-              <button class="start-item" data-app="terminal"><span>💻</span> Terminal</button>
-              <button class="start-item" data-app="notepad"><span>📝</span> Notepad</button>
-              <button class="start-item" data-app="htmlviewer"><span>🌐</span> Browser</button>
-              <button class="start-item" data-app="settings"><span>⚙</span> Settings</button>
-            </div>
-            <div id="start-no-results" class="start-no-results hidden">No apps found</div>
+          <div class="mint-apps" id="mint-apps">
+            <!-- filled by JS -->
           </div>
         </div>
+        <div id="start-no-results" class="start-no-results hidden">No applications found</div>
       </div>
 
-      <!-- Taskbar -->
+      <!-- Taskbar Mint -->
       <div id="taskbar">
-        <button id="start-btn" class="start-btn" title="Menu">◈</button>
+        <button id="start-btn" class="start-btn" title="Menu">
+          <span class="lm-icon">lm</span>
+        </button>
+        <button class="task-icon" data-app="explorer" title="Files">📁</button>
+        <button class="task-icon" data-app="htmlviewer" title="Firefox">🦊</button>
+        <button class="task-icon" data-app="terminal" title="Terminal">>_</button>
         <div id="taskbar-apps"></div>
         <div id="taskbar-right">
+          <span class="tray-icon">📶</span>
+          <span class="tray-icon">🔊</span>
+          <span class="tray-icon">🔋</span>
           <span id="clock"></span>
         </div>
       </div>

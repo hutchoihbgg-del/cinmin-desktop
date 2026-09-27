@@ -4,7 +4,14 @@ A beginner-friendly simulated desktop environment that runs as a web app. Feels 
 
 Built with just **HTML, CSS, and JavaScript** (Vite for dev server). No frameworks, no overengineering.
 
-> Theme: **Purple Linux Mint** — Mint Cinnamon-inspired Start Menu with purple sidebar, search, and power menu (since 0.3).
+> Theme: **Purple Linux Mint** — exact replica of the screenshot (purple wave wallpaper + Mint LM logo, 4 left desktop icons, Mint Cinnamon menu with categories).
+
+## Preview
+
+Wallpaper: purple wave gradient with large Mint LM logo center (like Linux Mint 21).
+Desktop icons left: Computer 🖥️, Home 🏠, Trash 🗑️, Firefox Web Browser 🦊 (draggable, persisted).
+Taskbar bottom: dark `#1e1b2e`, Mint `lm` button + Files/Firefox/Terminal quick icons, wifi/sound/battery + clock.
+Start Menu: 520×430 dark panel, search top, left categories (All Applications purple-highlighted, Accessories/Graphics/Internet/Office/Sound & Video/Administration/Preferences/Places/Recent Files), right app list (Firefox, LibreOffice Writer/Calc, Terminal, Files, Settings, etc.) filtered by category + search.
 
 ## Install & Run
 
@@ -15,37 +22,16 @@ npm install
 npm run dev
 ```
 
-Open the URL shown (usually `http://localhost:5173`). Press `Ctrl+C` to stop.
+Open `http://localhost:5173`. `Ctrl+C` to stop.
 
 ## Features
 
-### Desktop
-- Purple dark wallpaper with radial glow
-- 5 apps: File Explorer 📁, Terminal 💻, Notepad 📝, Browser 🌐, Settings ⚙
-- Double-click to launch, single-click to select
-- Draggable icons — positions saved in `localStorage: cinmin:iconPos`
-- Right-click desktop: Refresh / Create Folder / Create Text File / Personalize
-
-### Window System
-- Smooth open/close/minimize/restore animations
-- Drag with viewport clamping (never lose window off-screen)
-- Focus ring + dim unfocused, proper z-index, double-click titlebar to maximize
-
-### File Explorer
-- Breadcrumbs + address bar + back/forward/up
-- Double-click folders/files, right-click menu: Open / Rename / Delete / Properties / New Folder / New Text File
-- Shares the same virtual filesystem as Terminal/Notepad/Browser
-
-### Other Apps
-- **Notepad:** New/Open/Save/Save As → virtual FS, `Ctrl+S`
-- **Terminal:** `help, clear, ls, cd, pwd, mkdir, touch, cat, echo, whoami, date`
-- **Browser:** Address bar for `/Home/*.html` (renders via `srcdoc`) and `https://` (via `src`), sandboxed iframe
-- **Settings:** Wallpaper, dark/light, accent color, show/hide icons — persisted via localStorage
-
-### Taskbar & Start Menu
-- Taskbar shows every open app — click to focus/restore, right-click → Close Window
-- Mint-style Start Menu: search filtering, Recent (last 5), left Places sidebar, Power submenu (Shut Down/Restart)
-- Click outside or `Esc` closes menu; `Alt+Tab` cycles windows, `Ctrl+Shift+T` opens Terminal
+- **Desktop:** 4 Mint-accurate icons double-click to launch, draggable with `localStorage: cinmin:iconPos`, right-click → Refresh / Create Folder / File / Personalize
+- **Windows:** Animated open/close/minimize, drag-clamped, focus ring, maximize via button or double-click titlebar
+- **File Explorer:** Breadcrumbs + address bar + back/forward, grid with context menus, `.html` → Browser
+- **Notepad / Terminal / Browser / Settings:** All share virtual FS (`/Home`); Browser renders `/Home/*.html` + `https://`
+- **Start Menu Mint:** Category filter + live search + Recent Files + Places, click outside/`Esc` closes
+- **Shortcuts:** `Alt+Tab`, `Ctrl+Shift+T`, `Win` key
 
 ## Project Structure
 
@@ -55,30 +41,25 @@ cinmin-desktop/
 ├── package.json
 ├── src/
 │   ├── main.js
-│   ├── core/EventBus.js
-│   ├── core/FileSystem.js
-│   ├── desktop/Desktop.js
-│   ├── desktop/WindowManager.js
-│   ├── desktop/Taskbar.js
-│   ├── apps/FileExplorer.js
-│   ├── apps/Terminal.js
-│   ├── apps/Notepad.js
-│   ├── apps/HtmlViewer.js
-│   ├── apps/Settings.js
+│   ├── core/EventBus.js, FileSystem.js
+│   ├── desktop/Desktop.js, WindowManager.js
+│   ├── apps/FileExplorer.js, Terminal.js, Notepad.js, HtmlViewer.js, Settings.js
 │   └── styles/desktop.css, windows.css, explorer.css
 └── README.md
 ```
 
 ## Changelog
 
-- **0.3 — Purple Mint theme:** Redesigned Start Menu to Linux Mint Cinnamon style (purple sidebar + app grid), new Mint avatar/places, purple accent `#8b5cf6`, updated wallpaper gradient, responsive Mint layout.
-- **0.2.1 — Click fix:** Restored Start Menu launchers broken in 0.2, fixed desktop double-click.
-- **0.2 — Desktop interaction pass:** Window animations + drag clamping, desktop context menu + draggable icons, Explorer breadcrumbs + context menus, Taskbar right-click Close, Start search/recent/power.
-- **0.1 — Initial shell:** HTML/CSS/JS shell, windows, virtual FS, Explorer/Notepad/Terminal/Settings/Browser.
+- **0.4 — Mint pixel replica:** Matched screenshot exactly — wave wallpaper + LM SVG logo, 4 desktop icons, dark Mint taskbar with `lm` + tray, Start Menu rebuilt to Cinnamon layout (search + 10 categories left, app list right, purple active state, search+category filtering).
+- **0.3 — Purple Mint theme:** Initial Mint sidebar + app grid, purple accent `#8b5cf6`.
+- **0.2.1 — Click fix:** Restored Start launchers broken in 0.2.
+- **0.2 — Interaction pass:** Animations, drag clamping, context menus, breadcrumbs, Taskbar close, Start search/recent.
+- **0.1 — Initial shell**
 
 ## Planned
 
-- 0.4: Electron/Tauri shell, real local FS integration, native dialogs
-- 1.0: Plugin/app system, proper settings architecture, crash handling, auto-updates
+- 0.5: Notifications, system tray, more shortcuts
+- 0.6: Electron/Tauri, real FS
+- 1.0: Plugin system, auto-updates
 
-> README is updated on every push — see Changelog above.
+> README updated on every push.
