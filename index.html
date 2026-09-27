@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cinmin Desktop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="app">
+      <!-- Wallpaper layer -->
+      <div id="wallpaper"></div>
+
+      <!-- Desktop icons layer -->
+      <div id="desktop"></div>
+
+      <!-- Windows layer -->
+      <div id="windows"></div>
+
+      <!-- Start menu -->
+      <div id="start-menu" class="hidden">
+        <div class="start-header">
+          <div class="start-logo">◈ CINMIN</div>
+          <div class="start-subtitle">Desktop Environment</div>
+        </div>
+        <div class="start-apps">
+          <button class="start-item" data-app="explorer"><span>📁</span> File Explorer</button>
+          <button class="start-item" data-app="terminal"><span>💻</span> Terminal</button>
+          <button class="start-item" data-app="notepad"><span>📝</span> Notepad</button>
+          <button class="start-item" data-app="settings"><span>⚙</span> Settings</button>
+        </div>
+        <div class="start-footer">
+          <button id="shutdown-btn" class="start-shutdown">⏻ Shut Down</button>
+        </div>
+      </div>
+
+      <!-- Taskbar -->
+      <div id="taskbar">
+        <button id="start-btn" class="start-btn">◈ CINMIN</button>
+        <div id="taskbar-apps"></div>
+        <div id="taskbar-right">
+          <span id="clock"></span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

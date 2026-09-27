@@ -1,0 +1,24 @@
+/* explorer.css */
+
+.explorer { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.explorer-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px; background: var(--glass); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.exp-btn { padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--glass); color: var(--text); cursor: pointer; font-size: 13px; }
+.exp-btn:hover { background: var(--glass-strong); }
+.pathbar { flex: 1; }
+.path-input { width: 100%; padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border); background: rgba(0,0,0,0.15); color: var(--text); font-size: 13px; outline: none; }
+[data-theme="light"] .path-input { background: rgba(255,255,255,0.6); }
+.explorer-body { display: flex; flex: 1; min-height: 0; }
+.explorer-sidebar { width: 160px; padding: 10px; border-right: 1px solid var(--border); background: rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+[data-theme="light"] .explorer-sidebar { background: rgba(255,255,255,0.3); }
+.side-title { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; opacity: 0.5; margin-bottom: 6px; text-transform: uppercase; }
+.side-item { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px; border: none; background: transparent; color: var(--text); cursor: pointer; font-size: 13px; text-align: left; }
+.side-item:hover { background: var(--glass); }
+.explorer-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.explorer-grid { flex: 1; padding: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap: 8px; align-content: start; overflow-y: auto; }
+.file-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--text); cursor: pointer; transition: background 0.12s, border-color 0.12s; }
+.file-item:hover { background: var(--glass); border-color: var(--border); }
+.file-item.selected { background: var(--glass-strong); border-color: var(--accent); }
+.file-icon { font-size: 28px; }
+.file-name { font-size: 12px; text-align: center; word-break: break-all; }
+.empty { grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 24px; font-size: 14px; }
+.explorer-status { padding: 6px 10px; font-size: 11px; opacity: 0.6; border-top: 1px solid var(--border); }
