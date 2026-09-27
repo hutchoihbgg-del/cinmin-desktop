@@ -48,11 +48,26 @@ export function createTerminalContent() {
     return base + '/' + arg;
   }
 
+  const aliases = { dir: 'ls', cls: 'clear', del: 'rm', copy: 'cp', move: 'mv' };
+  const helpDetails = {
+    ls: 'ls [-l] [path]\nList files. -l shows type.',
+    cd: 'cd <path>\nChange directory.',
+    cp: 'cp <source> <destination>\nCopies a file or folder.',
+    mv: 'mv <source> <destination>\nMoves/renames.',
+    rm: 'rm <path>\nMoves to Trash (use Trash to empty).',
+    mkdir: 'mkdir <path>\nCreate folder.',
+    touch: 'touch <path>\nCreate empty file.',
+    cat: 'cat <file>\nShow file contents.',
+    echo: 'echo <text> > <file>\nWrite text to file.',
+    clear: 'clear\nClear screen.',
+  };
   const commands = {
-    help() {
+    help(args) {
+      if (args[0] && helpDetails[args[0]]) { print(helpDetails[args[0]]); return; }
       print('Available commands:');
       print('  help, clear, ls [-l], cd, pwd, mkdir, touch, cat, echo, rm, cp, mv, whoami, date');
-      print('  Examples: cp /Home/a.txt /Home/Documents  |  mv old.txt new.txt  |  rm file.txt');
+      print('  Aliases: dir→ls, cls→clear, del→rm, copy→cp, move→mv');
+      print('  Try: help cp');
     },
     clear() { output.innerHTML = ''; },
     ls(args) {
@@ -205,7 +220,8 @@ export function createTerminalContent() {
     printCmd(trimmed);
     const parts = trimmed.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
     const clean = parts.map(p => p.replace(/^"|"$/g, ''));
-    const cmd = clean[0].toLowerCase();
+    let cmd = clean[0].toLowerCase();
+    if (aliases[cmd]) cmd = aliases[cmd];
     const args = clean.slice(1);
     if (commands[cmd]) {
       try { commands[cmd](args); } catch (e) { print(`error: ${e.message}`, 'error'); notifier.error(e.message, 'Terminal'); }
@@ -215,7 +231,31 @@ export function createTerminalContent() {
     output.scrollTop = output.scrollHeight;
   }
 
+  // Tab autocomplete for FS paths
+  function autocomplete(partial) {
+    const slash = partial.lastIndexOf('/');
+    const dir = slash >= 0 ? resolvePath(partial.slice(0, slash) || cwd) : cwd;
+    const prefix = slash >= 0 ? partial.slice(slash+1) : partial;
+    const items = fs.list(dir);
+    if (!items) return null;
+    const match = items.find(i => i.name.startsWith(prefix));
+    return match ? (slash >= 0 ? partial.slice(0, slash+1) + match.name : match.name) : null;
+  }
+
   input.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const val = input.value;
+      const last = val.split(' ').pop();
+      const comp = autocomplete(last);
+      if (comp) {
+        const parts = val.split(' ');
+        parts[parts.length-1] = comp;
+        input.value = parts.join(' ');
+      }
+      return;
+    }
+    if (e.key === 'c' && e.ctrlKey) { e.preventDefault(); input.value=''; print('^C', 'error'); return; }
     if (e.key === 'Enter') {
       const val = input.value;
       input.value = '';

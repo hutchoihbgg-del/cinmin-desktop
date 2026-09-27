@@ -1,12 +1,14 @@
-// FileSystem.js — in-memory simulated filesystem for Cinmin (0.5: copy/cut/paste + persistence)
+// FileSystem.js — in-memory simulated filesystem for Cinmin (0.6: Trash + safe storage)
+
+import { storage } from './Storage.js';
 
 const STORE_KEY = 'cinmin:fs';
 
 function deepCloneNode(node) {
-  if (node.type === 'file') return { type: 'file', name: node.name, content: node.content };
+  if (node.type === 'file') return { type: 'file', name: node.name, content: node.content, _meta: node._meta ? { ...node._meta } : undefined };
   const children = {};
   for (const [k, v] of Object.entries(node.children)) children[k] = deepCloneNode(v);
-  return { type: 'folder', name: node.name, children };
+  return { type: 'folder', name: node.name, children, _meta: node._meta ? { ...node._meta } : undefined };
 }
 
 export class FileSystem {
@@ -18,26 +20,29 @@ export class FileSystem {
         'Documents': { type: 'folder', name: 'Documents', children: {} },
         'Downloads': { type: 'folder', name: 'Downloads', children: {} },
         'Pictures': { type: 'folder', name: 'Pictures', children: {} },
+        'Trash': { type: 'folder', name: 'Trash', children: {} },
         'README.txt': { type: 'file', name: 'README.txt', content: 'Welcome to Cinmin Desktop!\n\nThis is your simulated filesystem.\nCreate files, folders, and explore.\n' },
       }
     };
-    // clipboard for copy/cut/paste
-    this.clipboard = null; // { mode: 'copy'|'cut', path: string }
+    this.clipboard = null;
     this._load();
+    // ensure Trash exists after load (migration)
+    if (!this.root.children['Trash']) this.root.children['Trash'] = { type: 'folder', name: 'Trash', children: {} };
   }
 
-  // --- persistence (localStorage) ---
   _save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(this.root)); } catch {}
+    storage.setRaw(STORE_KEY, JSON.stringify(this.root));
   }
   _load() {
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
+    const raw = storage.getRaw(STORE_KEY);
+    if (raw) {
+      try {
         const parsed = JSON.parse(raw);
         if (parsed && parsed.children) this.root = parsed;
+      } catch {
+        console.warn('FS corrupted — restoring defaults');
       }
-    } catch {}
+    }
   }
 
   // normalize path like /Home/Documents or Home/Documents -> ["Home","Documents"]
@@ -92,8 +97,23 @@ export class FileSystem {
   stat(path) {
     const { node } = this._resolve(path);
     if (!node) return null;
-    if (node.type === 'file') return { name: node.name, type: 'file', size: node.content.length, content: node.content };
-    return { name: node.name, type: 'folder', size: Object.keys(node.children).length, children: Object.keys(node.children) };
+    const now = Date.now();
+    const meta = node._meta || {};
+    if (node.type === 'file') return {
+      name: node.name, type: 'file', size: node.content.length, content: node.content,
+      location: this.parentDir(path), created: meta.created || now, modified: meta.modified || now,
+      trashFrom: meta.trashFrom || null
+    };
+    let totalSize = 0;
+    const countItems = (n) => { for (const c of Object.values(n.children)) { if (c.type==='file') totalSize+=c.content.length; else countItems(c); } };
+    countItems(node);
+    return {
+      name: node.name, type: 'folder', size: Object.keys(node.children).length,
+      totalSize, itemCount: Object.keys(node.children).length,
+      children: Object.keys(node.children),
+      location: this.parentDir(path), created: meta.created || now, modified: meta.modified || now,
+      trashFrom: meta.trashFrom || null
+    };
   }
 
   createFolder(parentPath, name) {
@@ -101,7 +121,7 @@ export class FileSystem {
     const folder = this._getFolder(parentPath);
     if (!folder) return { ok: false, error: 'Parent not found' };
     if (folder.children[name]) return { ok: false, error: 'Already exists' };
-    folder.children[name] = { type: 'folder', name, children: {} };
+    folder.children[name] = { type: 'folder', name, children: {}, _meta: { created: Date.now(), modified: Date.now() } };
     this._save();
     return { ok: true };
   }
@@ -111,7 +131,7 @@ export class FileSystem {
     const folder = this._getFolder(parentPath);
     if (!folder) return { ok: false, error: 'Parent not found' };
     if (folder.children[name]) return { ok: false, error: 'Already exists' };
-    folder.children[name] = { type: 'file', name, content };
+    folder.children[name] = { type: 'file', name, content, _meta: { created: Date.now(), modified: Date.now() } };
     this._save();
     return { ok: true };
   }
@@ -128,16 +148,77 @@ export class FileSystem {
     if (!node) return { ok: false, error: 'Not found' };
     if (node.type !== 'file') return { ok: false, error: 'Not a file' };
     node.content = content;
+    if (!node._meta) node._meta = {};
+    node._meta.modified = Date.now();
     this._save();
     return { ok: true };
   }
 
-  delete(path) {
+  // delete now moves to Trash unless permanent
+  delete(path, permanent = false) {
+    if (path === '/Home/Trash' || path === '/Trash') return { ok: false, error: 'Cannot delete Trash' };
     const { node, parent, key } = this._resolve(path);
     if (!node || !parent) return { ok: false, error: 'Cannot delete root or not found' };
+    if (permanent) {
+      delete parent.children[key];
+      this._save();
+      return { ok: true };
+    }
+    return this.trash(path);
+  }
+
+  trash(path) {
+    const { node, parent, key } = this._resolve(path);
+    if (!node || !parent) return { ok: false, error: 'Not found' };
+    if (path.startsWith('/Home/Trash')) return { ok: false, error: 'Already in Trash' };
+    const trashFolder = this.root.children['Trash'];
+    let name = node.name;
+    let final = name; let i=1;
+    while (trashFolder.children[final]) { const dot=name.lastIndexOf('.'); if(dot>0) final=name.slice(0,dot)+` (${i})`+name.slice(dot); else final=`${name} (${i})`; i++; }
+    if (!node._meta) node._meta = {};
+    node._meta.trashFrom = path;
+    node._meta.trashedAt = Date.now();
+    node.name = final;
     delete parent.children[key];
+    trashFolder.children[final] = node;
+    this._save();
+    return { ok: true, trashedAs: `/Home/Trash/${final}` };
+  }
+
+  restore(trashPath) {
+    if (!trashPath.startsWith('/Home/Trash/')) return { ok: false, error: 'Not in Trash' };
+    const { node, parent, key } = this._resolve(trashPath);
+    if (!node || !parent) return { ok: false, error: 'Not found in Trash' };
+    const orig = node._meta?.trashFrom;
+    if (!orig) return { ok: false, error: 'No original location' };
+    const destDir = this.parentDir(orig);
+    const destFolder = this._getFolder(destDir);
+    const targetDir = destFolder ? destDir : '/Home';
+    const folder = this._getFolder(targetDir);
+    let name = node.name; let final=name; let i=1;
+    // try original name first
+    const origName = orig.split('/').pop();
+    final = origName;
+    while (folder.children[final]) { const dot=origName.lastIndexOf('.'); if(dot>0) final=origName.slice(0,dot)+` (${i})`+origName.slice(dot); else final=`${origName} (${i})`; i++; }
+    delete parent.children[key];
+    node.name = final;
+    delete node._meta.trashFrom;
+    delete node._meta.trashedAt;
+    folder.children[final] = node;
+    this._save();
+    return { ok: true, restoredTo: `${targetDir}/${final}` };
+  }
+
+  emptyTrash() {
+    const trash = this.root.children['Trash'];
+    trash.children = {};
     this._save();
     return { ok: true };
+  }
+
+  isTrashEmpty() {
+    const trash = this.root.children['Trash'];
+    return Object.keys(trash.children).length === 0;
   }
 
   rename(path, newName) {

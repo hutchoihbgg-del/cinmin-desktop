@@ -1,6 +1,7 @@
-// NotificationManager.js — simple toast + center, persisted to localStorage
+// NotificationManager.js — toast + center with read/unread, persisted safely
 
 import { events } from './EventBus.js';
+import { storage } from './Storage.js';
 
 const STORE_KEY = 'cinmin:notifications';
 
@@ -15,10 +16,11 @@ export class NotificationManager {
   }
 
   _load() {
-    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch { return []; }
+    const v = storage.get(STORE_KEY, []);
+    return Array.isArray(v) ? v : [];
   }
   _save() {
-    localStorage.setItem(STORE_KEY, JSON.stringify(this.items.slice(0, 50)));
+    storage.set(STORE_KEY, this.items.slice(0, 50));
   }
 
   _ensureDOM() {
@@ -65,7 +67,8 @@ export class NotificationManager {
   notify({ title, body, type = 'info' }) {
     const item = {
       id: this.nextId++,
-      title, body, type,
+      title, body, type, // success|info|warning|error
+      read: false,
       time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
       ts: Date.now(),
     };
@@ -79,6 +82,8 @@ export class NotificationManager {
 
   error(body, title = 'Error') { this.notify({ title, body, type: 'error' }); }
   success(body, title = 'Done') { this.notify({ title, body, type: 'success' }); }
+  info(body, title = 'Info') { this.notify({ title, body, type: 'info' }); }
+  warning(body, title = 'Warning') { this.notify({ title, body, type: 'warning' }); }
 
   _showToast(item) {
     const el = document.createElement('div');
@@ -98,16 +103,33 @@ export class NotificationManager {
     }
     for (const n of this.items) {
       const row = document.createElement('div');
-      row.className = `notif-row notif-${n.type}`;
-      row.innerHTML = `<div class="notif-title">${n.title} <span class="notif-time">${n.time}</span></div><div class="notif-body">${n.body}</div>`;
+      row.className = `notif-row notif-${n.type} ${n.read ? 'read' : 'unread'}`;
+      row.innerHTML = `<div class="notif-title">${this._icon(n.type)} ${n.title} <span class="notif-time">${n.time}</span><button class="notif-del" data-id="${n.id}" title="Remove">×</button></div><div class="notif-body">${n.body}</div>`;
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.notif-del')) return;
+        n.read = true; this._save(); this._renderCenter(); this._updateBadge();
+      });
       list.appendChild(row);
     }
+    list.querySelectorAll('.notif-del').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = Number(btn.dataset.id);
+        this.items = this.items.filter(x => x.id !== id);
+        this._save(); this._renderCenter(); this._updateBadge();
+      });
+    });
+  }
+
+  _icon(type) {
+    const m = { success: '✓', info: 'i', warning: '⚠', error: '×' };
+    return m[type] || '•';
   }
 
   _updateBadge() {
     const b = document.getElementById('notif-badge');
     if (!b) return;
-    const unread = this.items.length;
+    const unread = this.items.filter(x => !x.read).length;
     if (unread === 0) b.classList.add('hidden');
     else { b.textContent = unread > 9 ? '9+' : String(unread); b.classList.remove('hidden'); }
   }
@@ -115,6 +137,11 @@ export class NotificationManager {
   toggle(force) {
     const show = typeof force === 'boolean' ? force : this.centerEl.classList.contains('hidden');
     this.centerEl.classList.toggle('hidden', !show);
+    if (show) {
+      // mark all read when opened
+      this.items.forEach(x => x.read = true);
+      this._save(); this._updateBadge(); this._renderCenter();
+    }
   }
 
   clear() {

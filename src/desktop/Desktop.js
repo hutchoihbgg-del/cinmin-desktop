@@ -121,6 +121,13 @@ export function initDesktop() {
   let activeCat='all';
   let searchQuery='';
 
+  function walkFiles(node, base, out){
+    for(const [k, child] of Object.entries(node.children)){
+      const p = base + '/' + k;
+      out.push({ path: p, name: child.name, type: child.type });
+      if(child.type==='folder') walkFiles(child, p, out);
+    }
+  }
   function renderMintApps(){
     appsEl.innerHTML='';
     let list = MINT_APPS.filter(a => {
@@ -146,7 +153,13 @@ export function initDesktop() {
       ];
       list = searchQuery ? places.filter(p=>p.name.toLowerCase().includes(searchQuery.toLowerCase())) : places;
     }
-    if(list.length===0){ noResults.classList.remove('hidden'); return; }
+    // global file search (0.6) — when searching, append file results
+    let fileHits = [];
+    if(searchQuery && searchQuery.length>=2){
+      const all=[]; walkFiles(fs.root, '/Home', all);
+      fileHits = all.filter(f=> f.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0,6);
+    }
+    if(list.length===0 && fileHits.length===0){ noResults.classList.remove('hidden'); return; }
     noResults.classList.add('hidden');
     list.forEach(item=>{
       const btn=document.createElement('button');
@@ -156,6 +169,19 @@ export function initDesktop() {
         startMenu.classList.add('hidden');
         events.emit('app:launch', item.app);
         trackRecent(item.app);
+      });
+      appsEl.appendChild(btn);
+    });
+    fileHits.forEach(f=>{
+      const btn=document.createElement('button');
+      btn.className='mint-app';
+      const icon = f.type==='folder' ? '📁' : f.name.endsWith('.txt')?'📄':'🌐';
+      btn.innerHTML=`<span class="mint-app-icon">${icon}</span> ${f.name} <small style="opacity:0.5; margin-left:auto">${f.path}</small>`;
+      btn.addEventListener('click',()=>{
+        startMenu.classList.add('hidden');
+        if(f.type==='folder') events.emit('app:launch','explorer');
+        else if(f.name.endsWith('.html')) events.emit('html:open', f.path);
+        else events.emit('file:open', f.path);
       });
       appsEl.appendChild(btn);
     });

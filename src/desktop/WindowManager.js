@@ -131,6 +131,19 @@ export class WindowManager {
         dragging = false;
         titlebar.style.cursor = '';
         win.classList.remove('dragging');
+        // snap (0.6) — simple edge snap
+        const left = parseInt(win.style.left,10);
+        const top = parseInt(win.style.top,10);
+        if (top <= 6) { this.toggleMaximize(entry.id); return; }
+        if (left <= 8) {
+          win.style.left='0px'; win.style.top='0px';
+          win.style.width='50%'; win.style.height='calc(100% - 42px)';
+          entry.maximized=false;
+        } else if (left + win.offsetWidth >= window.innerWidth - 8) {
+          win.style.left='50%'; win.style.top='0px';
+          win.style.width='50%'; win.style.height='calc(100% - 42px)';
+          entry.maximized=false;
+        }
       }
     };
     window.addEventListener('mousemove', onMove);
@@ -241,13 +254,33 @@ export class WindowManager {
     }, 150);
   }
 
-  // keyboard helper: cycle focus Alt+Tab
+  // keyboard helper: cycle focus Alt+Tab with overlay
   focusNext() {
     const ids = [...this.windows.keys()].filter(id => !this.windows.get(id).minimized);
     if (ids.length < 2) return;
     const idx = ids.indexOf(this.activeId);
     const next = ids[(idx + 1) % ids.length];
     this.focus(next);
+    this._showAltTabOverlay(next);
+  }
+  _showAltTabOverlay(activeId){
+    let overlay=document.getElementById('alt-tab-overlay');
+    if(!overlay){
+      overlay=document.createElement('div');
+      overlay.id='alt-tab-overlay';
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML='';
+    for(const id of [...this.windows.keys()].filter(id=>!this.windows.get(id).minimized)){
+      const w=this.windows.get(id);
+      const item=document.createElement('div');
+      item.className='alt-tab-item'+(id===activeId?' active':'');
+      item.innerHTML=`<span>${w.icon}</span><small>${w.title}</small>`;
+      overlay.appendChild(item);
+    }
+    overlay.classList.remove('hidden');
+    clearTimeout(this._altTabTimer);
+    this._altTabTimer=setTimeout(()=>overlay.classList.add('hidden'),700);
   }
 }
 
