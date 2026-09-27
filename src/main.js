@@ -7,6 +7,7 @@ import './styles/explorer.css';
 import { events } from './core/EventBus.js';
 import { getApp } from './core/AppRegistry.js';
 import { notifier } from './core/NotificationManager.js';
+import { pluginManager } from './core/PluginManager.js';
 import { WindowManager } from './desktop/WindowManager.js';
 import { initDesktop } from './desktop/Desktop.js';
 
@@ -47,6 +48,8 @@ events.on('app:launch', (appId) => launch(appId));
 events.on('file:open', (path) => launch('notepad', path));
 events.on('html:open', (path) => launch('htmlviewer', path));
 events.on('notification:new', () => {}); // keep notifier alive
+// load plugins persisted
+pluginManager.loadAll();
 // global error hook
 window.addEventListener('error', (e) => notifier.error(e.message || 'Unknown error', 'System'));
 window.addEventListener('unhandledrejection', (e) => notifier.error(e.reason?.message || String(e.reason), 'System'));

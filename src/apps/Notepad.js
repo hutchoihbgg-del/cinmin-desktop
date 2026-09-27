@@ -12,10 +12,12 @@ export function createNotepadContent(initialPath = null) {
       <button data-action="open">Open</button>
       <button data-action="save">Save</button>
       <button data-action="saveAs">Save As</button>
+      <button data-action="debug" class="notepad-debug ${window.htmlDebugLint ? '' : 'hidden'}" title="HTML Debug (needs HTMLDEBUG plugin)">🐛 Debug HTML</button>
       <span class="notepad-filename"></span>
       <span class="notepad-dirty hidden" title="Unsaved changes">●</span>
     </div>
     <textarea class="notepad-editor" placeholder="Start typing..." aria-label="Notepad editor"></textarea>
+    <div class="notepad-debug-output hidden"></div>
     <div class="notepad-status" role="status">Ready</div>
   `;
   const editor = wrap.querySelector('.notepad-editor');
@@ -113,6 +115,19 @@ export function createNotepadContent(initialPath = null) {
   }
   wrap.querySelector('[data-action="save"]').addEventListener('click', doSave);
   wrap.querySelector('[data-action="saveAs"]').addEventListener('click', doSaveAs);
+  const debugBtn = wrap.querySelector('[data-action="debug"]');
+  const debugOut = wrap.querySelector('.notepad-debug-output');
+  debugBtn?.addEventListener('click', () => {
+    if (!window.htmlDebugLint) { notifier.warning('Install HTMLDEBUG plugin first: plugin install HTMLDEBUG', 'Notepad'); debugOut.textContent='Plugin not installed. In Terminal: plugin install HTMLDEBUG'; debugOut.classList.remove('hidden'); return; }
+    const errs = window.htmlDebugLint(editor.value);
+    if (errs.length===0) { debugOut.textContent='✓ No HTML issues'; debugOut.className='notepad-debug-output success'; }
+    else { debugOut.innerHTML = errs.map(e=>`• ${e}`).join('<br>'); debugOut.className='notepad-debug-output error'; }
+    debugOut.classList.remove('hidden');
+    notifier.info(errs.length? `${errs.length} issue(s)` : 'HTML looks good', 'HTML Debug');
+  });
+  // show button if plugin gets installed later
+  const checkPlugin = setInterval(()=>{ if(window.htmlDebugLint) { debugBtn?.classList.remove('hidden'); clearInterval(checkPlugin); } }, 1000);
+  setTimeout(()=>clearInterval(checkPlugin), 15000);
 
   wrap.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); doSave(); }

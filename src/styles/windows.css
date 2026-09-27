@@ -113,6 +113,11 @@
 /* 0.5 additions */
 .notepad-dirty { color: #f87171; font-size: 14px; margin-left: 6px; }
 .notepad-dirty.hidden { display: none; }
+.notepad-debug.hidden { display: none; }
+.notepad-debug-output { padding: 6px 10px; font-size: 11px; border-top: 1px solid var(--border); max-height: 80px; overflow-y: auto; }
+.notepad-debug-output.hidden { display: none; }
+.notepad-debug-output.error { background: #fef2f2; color: #991b1b; }
+.notepad-debug-output.success { background: #f0fdf4; color: #166534; }
 [data-animations="false"] .window { animation: none !important; transition: none !important; }
 [data-animations="false"] .window.closing,
 [data-animations="false"] .window.opening,

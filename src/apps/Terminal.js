@@ -2,6 +2,7 @@
 
 import { fs } from '../core/FileSystem.js';
 import { notifier } from '../core/NotificationManager.js';
+import { pluginManager } from '../core/PluginManager.js';
 
 export function createTerminalContent() {
   const wrap = document.createElement('div');
@@ -63,11 +64,50 @@ export function createTerminalContent() {
   };
   const commands = {
     help(args) {
-      if (args[0] && helpDetails[args[0]]) { print(helpDetails[args[0]]); return; }
+      if (args[0]) {
+        const lower = args[0].toLowerCase();
+        if (helpDetails[lower]) { print(helpDetails[lower]); return; }
+        const plugHelp = pluginManager.helpFor(lower);
+        if (plugHelp) { print(plugHelp); return; }
+      }
       print('Available commands:');
       print('  help, clear, ls [-l], cd, pwd, mkdir, touch, cat, echo, rm, cp, mv, whoami, date');
       print('  Aliases: dir→ls, cls→clear, del→rm, copy→cp, move→mv');
-      print('  Try: help cp');
+      print('  Plugins: plugin list | plugin install <name> | plugin remove <name>');
+      print('  Try: help cp  or  plugin list');
+    },
+    plugin(args) {
+      const sub = (args[0] || 'help').toLowerCase();
+      if (sub === 'list') {
+        const cat = pluginManager.listCatalog();
+        print('Catalog:');
+        cat.forEach(p => {
+          const inst = pluginManager.isInstalled(p.id) ? ' [installed]' : '';
+          print(`  ${p.id} — ${p.description}${inst}`);
+        });
+        const inst = pluginManager.listInstalled();
+        print(inst.length ? `Installed: ${inst.join(', ')}` : 'No plugins installed. Try: plugin install HTMLDEBUG');
+        return;
+      }
+      if (sub === 'install' && args[1]) {
+        const id = args[1];
+        print(`Installing ${id}...`);
+        pluginManager.install(id).then(r => {
+          if (!r.ok) print(`plugin: ${r.error}`, 'error');
+          else print(`✓ ${id} installed. Try: htmldebug /Home/index.html`, 'success');
+        });
+        return;
+      }
+      if ((sub === 'remove' || sub === 'uninstall') && args[1]) {
+        pluginManager.remove(args[1]).then(r => {
+          if (!r.ok) print(`plugin: ${r.error}`, 'error');
+          else print(`Removed ${args[1]}`, 'success');
+        });
+        return;
+      }
+      print('Usage: plugin list | plugin install <NAME> | plugin remove <NAME>');
+      print('  Available: HTMLDEBUG, COWSAY');
+      print('  Example: plugin install HTMLDEBUG');
     },
     clear() { output.innerHTML = ''; },
     ls(args) {
@@ -223,6 +263,11 @@ export function createTerminalContent() {
     let cmd = clean[0].toLowerCase();
     if (aliases[cmd]) cmd = aliases[cmd];
     const args = clean.slice(1);
+    // try plugin commands first
+    if (pluginManager.tryRun(cmd, args, print)) {
+      output.scrollTop = output.scrollHeight;
+      return;
+    }
     if (commands[cmd]) {
       try { commands[cmd](args); } catch (e) { print(`error: ${e.message}`, 'error'); notifier.error(e.message, 'Terminal'); }
     } else {

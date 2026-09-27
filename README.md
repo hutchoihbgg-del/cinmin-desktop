@@ -32,7 +32,8 @@ Open `http://localhost:5173`. `Ctrl+C` to stop.
 - **Global Search:** Start Menu search finds **Apps + Files + Folders** (walks FS), `Enter` opens best result
 - **Window Mgmt:** **Alt+Tab overlay** (cards `[ 📁 Explorer ]`), edge snap (left half / right half / top maximize)
 - **Recovery:** Per-app `app-error` overlay (Restart App / Close) — one app crash doesn't kill desktop
-- **Persistence Tested:** file/icon/settings/bookmark/notification all survive reload
+- **Plugins** (`src/core/PluginManager.js` + `src/plugins/`): Purple Terminal plugin system — `plugin list | plugin install HTMLDEBUG | plugin remove HTMLDEBUG` (also `COWSAY`), persisted, lazy-loaded; **HTMLDEBUG** adds `htmldebug <path>` + Notepad 🐛 Debug HTML lint (unclosed/mismatched tags, missing doctype)
+- **Persistence Tested:** file/icon/settings/bookmark/notification/plugin all survive reload
 
 ## Project Structure
 
@@ -42,15 +43,17 @@ cinmin-desktop/
 ├── package.json
 ├── src/
 │   ├── main.js
-│   ├── core/EventBus.js, FileSystem.js, AppRegistry.js, NotificationManager.js, Storage.js, Recovery.js
+│   ├── core/EventBus.js, FileSystem.js, AppRegistry.js, NotificationManager.js, Storage.js, Recovery.js, PluginManager.js
 │   ├── desktop/Desktop.js, WindowManager.js
 │   ├── apps/FileExplorer.js, Terminal.js, Notepad.js, HtmlViewer.js, Settings.js
+│   ├── plugins/HtmlDebug.js, Cowsay.js
 │   └── styles/desktop.css, windows.css, explorer.css
 └── README.md
 ```
 
 ## Changelog
 
+- **0.6.1 — Plugins:** Terminal plugin system + **HTMLDEBUG** (htmldebug command + Notepad 🐛 lint) + COWSAY demo.
 - **0.6 — Interaction Pass:** Safe storage wrapper, Trash system, desktop selection + Trash, Explorer multi-select + sorting + properties dialog, Terminal Tab/aliases/help, Notepad status bar, notifications read/unread, global file search, Alt+Tab overlay, window snap, Browser loading/blocked polish, Settings confirmations/clock/sounds, recovery overlay.
 - **0.5 — System Foundation** · **0.4 — Mint pixel replica** · **0.3 — Purple Mint** · **0.2 — Interaction pass** · **0.1 — Initial shell**
 
