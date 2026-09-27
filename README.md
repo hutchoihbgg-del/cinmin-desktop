@@ -7,8 +7,8 @@ Built with just HTML, CSS, and JavaScript (Vite for dev server). No frameworks, 
 ## Install & Run
 
 ```bash
-npm install
-npm run dev
+npm --prefix cinmin-desktop install
+npm --prefix cinmin-desktop run dev
 ```
 
 Then open the URL shown (usually http://localhost:5173).
