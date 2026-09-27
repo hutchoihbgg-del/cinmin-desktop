@@ -93,6 +93,7 @@ cinmin-desktop/
 
 ## Changelog
 
+- **1.1 — Chromebook Polish:** PWA install flow (Settings → System → Install Cinmin, beforeinstallprompt), offline ● Online/Offline indicator, SW versioning `cinmin-shell-v1` with cleanup, update notification (Reload), Chromebook 1366×768/1920×1080 responsive + touch/pointer drag, window resize handles (320×200 min), Chrome-safe keyboard (only when focused), Open in Chrome `noopener`, Downloads to `/Home/Downloads`, Storage health (Clear Cache/Notifications/History/Reset), crash recovery per app, memory cleanup, standalone display detection, manifest 192/512 icons.
 - **0.8 — Plugin Ecosystem:** Manifests, status (installed/available/failed/disabled), `plugin info/enable/disable/reload`, sandboxed context, app/file assoc, isolated storage, Settings Plugins UI, Calculator/Markdown/HelloWorld/ImageInfo plugins, HTMLDEBUG improvements (duplicate IDs, alt, nesting, duplicate tags, title, lang, comments + line numbers), Cowsay flags, deps, failure overlay, hot reload.
 - **0.6.1 — Plugins:** Initial HTMLDEBUG + COWSAY
 - **0.6 — Interaction Pass** · **0.5 — System Foundation** · **0.4 — Mint replica** · 0.3/0.2/0.1
