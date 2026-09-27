@@ -197,7 +197,6 @@ export function initDesktop() {
   // FIX: re-attach Start Menu app launch listeners (was removed in 0.2 rewrite)
   function attachStartLaunchers() {
     startAppsEl.querySelectorAll('.start-item').forEach(btn => {
-      // avoid double-binding
       if (btn.dataset.bound) return;
       btn.dataset.bound = '1';
       btn.addEventListener('click', () => {
@@ -210,6 +209,20 @@ export function initDesktop() {
     });
   }
   attachStartLaunchers();
+  // Mint sidebar places + settings button
+  document.querySelectorAll('.mint-place').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const app = btn.dataset.app || 'explorer';
+      startMenu.classList.add('hidden');
+      events.emit('app:launch', app);
+      trackRecent(app);
+    });
+  });
+  document.getElementById('mint-settings-btn')?.addEventListener('click', () => {
+    startMenu.classList.add('hidden');
+    events.emit('app:launch', 'settings');
+    trackRecent('settings');
+  });
 
   // search
   function filterApps(q) {
@@ -222,7 +235,7 @@ export function initDesktop() {
       if (show) visible++;
     });
     if (noResults) noResults.classList.toggle('hidden', visible !== 0 || query === '');
-    if (recentWrap) recentWrap.style.display = query ? 'none' : '';
+    if (recentWrap) recentWrap.classList.toggle('hidden', !!query);
   }
   searchInput?.addEventListener('input', () => filterApps(searchInput.value));
   searchInput?.addEventListener('keydown', (e) => {

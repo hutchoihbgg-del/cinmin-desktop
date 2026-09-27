@@ -9,50 +9,69 @@
   </head>
   <body>
     <div id="app">
-      <!-- Wallpaper layer -->
       <div id="wallpaper"></div>
-
-      <!-- Desktop icons layer -->
       <div id="desktop"></div>
-
-      <!-- Windows layer -->
       <div id="windows"></div>
 
-      <!-- Start menu -->
+      <!-- Start menu — Linux Mint purple style -->
       <div id="start-menu" class="hidden">
-        <div class="start-header">
-          <div class="start-logo">◈ CINMIN</div>
-          <div class="start-subtitle">Desktop Environment</div>
+        <div class="mint-search">
+          <span class="mint-search-icon">⌕</span>
+          <input id="start-search" type="text" placeholder="Search..." autocomplete="off" />
         </div>
-        <div class="start-search-wrap">
-          <input id="start-search" type="text" placeholder="Search apps..." autocomplete="off" />
-        </div>
-        <div class="start-apps" id="start-apps">
-          <button class="start-item" data-app="explorer"><span>📁</span> File Explorer</button>
-          <button class="start-item" data-app="terminal"><span>💻</span> Terminal</button>
-          <button class="start-item" data-app="notepad"><span>📝</span> Notepad</button>
-          <button class="start-item" data-app="htmlviewer"><span>🌐</span> Browser</button>
-          <button class="start-item" data-app="settings"><span>⚙</span> Settings</button>
-        </div>
-        <div id="start-recent" class="start-recent hidden">
-          <div class="start-recent-title">Recent</div>
-          <div id="start-recent-list"></div>
-        </div>
-        <div id="start-no-results" class="start-no-results hidden">No apps found</div>
-        <div class="start-footer">
-          <div class="power-wrap">
-            <button id="power-btn" class="start-shutdown">⏻ Power ▴</button>
-            <div id="power-menu" class="power-menu hidden">
-              <button data-power="shutdown">⏻ Shut Down</button>
-              <button data-power="restart">↻ Restart</button>
+        <div class="mint-layout">
+          <!-- Left sidebar (Mint-style) -->
+          <div class="mint-sidebar">
+            <div class="mint-user">
+              <div class="mint-avatar">◈</div>
+              <div>
+                <div class="mint-username">cinmin</div>
+                <div class="mint-host">cinmin@desktop</div>
+              </div>
             </div>
+            <div class="mint-places">
+              <button class="mint-place" data-app="explorer"><span>🏠</span> Home</button>
+              <button class="mint-place" data-app="explorer"><span>📁</span> Documents</button>
+              <button class="mint-place" data-app="explorer"><span>📥</span> Downloads</button>
+              <button class="mint-place" data-app="explorer"><span>🖼</span> Pictures</button>
+            </div>
+            <div class="mint-recent-sidebar" id="start-recent">
+              <div class="mint-section-title">Recent</div>
+              <div id="start-recent-list"></div>
+            </div>
+            <div class="mint-power">
+              <div class="power-wrap">
+                <button id="power-btn" class="mint-power-btn">⏻ Power</button>
+                <div id="power-menu" class="power-menu hidden">
+                  <button data-power="shutdown">⏻ Shut Down</button>
+                  <button data-power="restart">↻ Restart</button>
+                </div>
+              </div>
+              <button id="mint-settings-btn" class="mint-power-btn secondary">⚙ Settings</button>
+            </div>
+          </div>
+
+          <!-- Right app grid -->
+          <div class="mint-main">
+            <div class="mint-header">
+              <div class="start-logo">All Applications</div>
+              <div class="start-subtitle">Cinmin — Purple Mint</div>
+            </div>
+            <div class="start-apps" id="start-apps">
+              <button class="start-item" data-app="explorer"><span>📁</span> File Explorer</button>
+              <button class="start-item" data-app="terminal"><span>💻</span> Terminal</button>
+              <button class="start-item" data-app="notepad"><span>📝</span> Notepad</button>
+              <button class="start-item" data-app="htmlviewer"><span>🌐</span> Browser</button>
+              <button class="start-item" data-app="settings"><span>⚙</span> Settings</button>
+            </div>
+            <div id="start-no-results" class="start-no-results hidden">No apps found</div>
           </div>
         </div>
       </div>
 
       <!-- Taskbar -->
       <div id="taskbar">
-        <button id="start-btn" class="start-btn">◈ CINMIN</button>
+        <button id="start-btn" class="start-btn" title="Menu">◈</button>
         <div id="taskbar-apps"></div>
         <div id="taskbar-right">
           <span id="clock"></span>
