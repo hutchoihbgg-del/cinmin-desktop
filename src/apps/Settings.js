@@ -41,6 +41,20 @@ export function createSettingsContent() {
       <label><input type="checkbox" class="anim-check" checked> Enable window animations</label>
     </section>
 
+    <section class="settings-section" id="system-section">
+      <h3>System</h3>
+      <div id="install-row" style="margin-bottom:8px"></div>
+      <div id="offline-row" style="font-size:12px; margin-bottom:8px"></div>
+      <div id="pwa-mode-row" style="font-size:11px; opacity:0.6"></div>
+      <div id="storage-row" style="margin-top:10px; font-size:12px"></div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px">
+        <button class="sys-btn" data-a="clearCache">Clear Cache</button>
+        <button class="sys-btn" data-a="clearNotifs">Clear Notifications</button>
+        <button class="sys-btn" data-a="clearHistory">Clear Browser History</button>
+        <button class="sys-btn danger" data-a="reset">Reset Cinmin</button>
+      </div>
+    </section>
+
     <section class="settings-section" id="plugins-section">
       <h3>Plugins</h3>
       <div id="plugins-list"></div>
@@ -48,7 +62,7 @@ export function createSettingsContent() {
 
     <section class="settings-section">
       <h3>About</h3>
-      <p style="font-size:12px; opacity:0.7">Cinmin 0.8 — Plugin Ecosystem. Appearance locked at 0.4.</p>
+      <p style="font-size:12px; opacity:0.7">Cinmin 1.1 — Chromebook Polish. Appearance locked at 0.4.</p>
     </section>
   `;
 
@@ -113,6 +127,61 @@ export function createSettingsContent() {
     document.documentElement.setAttribute('data-animations', String(animCheck.checked));
     events.emit('settings:changed');
   });
+
+  // System: PWA install, offline, storage, display mode
+  (function initSystem(){
+    const installRow = wrap.querySelector('#install-row');
+    const offlineRow = wrap.querySelector('#offline-row');
+    const pwaRow = wrap.querySelector('#pwa-mode-row');
+    const storageRow = wrap.querySelector('#storage-row');
+    // install
+    function renderInstall(){
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      if(isStandalone){
+        installRow.innerHTML = '<span style="color:#4ade80">✓ Cinmin is installed</span>';
+        return;
+      }
+      const prompt = window._cinminGetInstallPrompt?.();
+      if(prompt){
+        installRow.innerHTML = '<button id="cinmin-install-btn" style="padding:6px 12px; border-radius:8px; background:#7c3aed; color:white; border:none; cursor:pointer">Install Cinmin</button>';
+        installRow.querySelector('#cinmin-install-btn')?.addEventListener('click', async ()=>{ prompt.prompt(); const c=await prompt.userChoice; if(c.outcome==='accepted') installRow.innerHTML='<span style="color:#4ade80">✓ Cinmin is installed</span>'; });
+      } else {
+        installRow.innerHTML = '<span style="opacity:0.6; font-size:11px">Use Chrome\'s menu to install Cinmin.</span>';
+      }
+    }
+    renderInstall();
+    window.addEventListener('beforeinstallprompt', renderInstall);
+    window.addEventListener('appinstalled', renderInstall);
+    // offline
+    function renderOffline(){
+      const online = navigator.onLine;
+      offlineRow.innerHTML = online ? '<span style="color:#4ade80">● Online</span>' : '<span style="color:#f87171">● Offline</span>';
+    }
+    renderOffline();
+    window.addEventListener('online', renderOffline);
+    window.addEventListener('offline', renderOffline);
+    // pwa mode (debug only)
+    const standalone = window.matchMedia('(display-mode: standalone)').matches;
+    pwaRow.textContent = standalone ? 'Display: standalone' : '';
+    // storage health
+    function renderStorage(){
+      let total = 0;
+      for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); const v=localStorage.getItem(k); total += (k.length + (v? v.length:0)); }
+      const kb = (total/1024).toFixed(1);
+      storageRow.textContent = `Cinmin data: ${kb} KB`;
+    }
+    renderStorage();
+    wrap.querySelector('[data-a="clearCache"]')?.addEventListener('click', ()=>{ caches.keys().then(keys=> Promise.all(keys.filter(k=>k.startsWith('cinmin-')).map(k=>caches.delete(k)))).then(()=> alert('Cache cleared')); });
+    wrap.querySelector('[data-a="clearNotifs"]')?.addEventListener('click', ()=>{ localStorage.removeItem('cinmin:notifications'); alert('Notifications cleared'); location.reload(); });
+    wrap.querySelector('[data-a="clearHistory"]')?.addEventListener('click', ()=>{ localStorage.removeItem('cinmin:browser:history'); alert('History cleared'); });
+    wrap.querySelector('[data-a="reset"]')?.addEventListener('click', ()=>{
+      if(confirm('Reset Cinmin? This clears virtual filesystem, settings, plugins. Are you sure?')){
+        if(confirm('Really reset everything?')){
+          localStorage.clear(); caches.keys().then(keys=> Promise.all(keys.map(k=>caches.delete(k)))).then(()=> location.reload());
+        }
+      }
+    });
+  })();
 
   // plugins UI
   function renderPlugins(){

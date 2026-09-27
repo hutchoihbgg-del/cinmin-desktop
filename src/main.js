@@ -57,9 +57,36 @@ window.addEventListener('unhandledrejection', (e) => notifier.error(e.reason?.me
 initDesktop();
 
 // PWA — installable, offline shell (Chromebook)
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; window._cinminInstallPrompt = e; });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; notifier.success('Cinmin installed', 'PWA'); });
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // update notification (0.5 already has notifier)
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw?.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            notifier.info('Cinmin has an update.', 'Update');
+            // show reload toast with action
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<b>Cinmin has an update.</b><span>Reload to apply</span><button style="margin-top:6px; padding:4px 8px; border-radius:6px; background:#7c3aed; color:white; border:none; cursor:pointer">Reload</button>`;
+            toast.querySelector('button').addEventListener('click', () => window.location.reload());
+            document.getElementById('toast-container')?.appendChild(toast);
+            setTimeout(()=> toast.remove(), 8000);
+          }
+        });
+      });
+    }).catch(()=>{});
+  });
+  // offline/online events handled in Settings, also notify
+  window.addEventListener('online', () => notifier.success('Back online', 'System'));
+  window.addEventListener('offline', () => notifier.warning('You are offline', 'System'));
 }
+// expose install helper for Settings
+window._cinminGetInstallPrompt = () => deferredPrompt;
 // keyboard shortcuts — only when Cinmin has focus (Chromebook safe)
 document.addEventListener('keydown', (e) => {
   const focusedInside = document.getElementById('app')?.contains(document.activeElement) || document.hasFocus();

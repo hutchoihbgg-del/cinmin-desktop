@@ -51,7 +51,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Inter', system-ui, sa
   width: 76px; display: flex; flex-direction: column; align-items: center; gap: 4px;
   background: transparent; border: 1px solid transparent; border-radius: 8px;
   padding: 6px 4px; cursor: pointer; color: #e9d5ff;
-  transition: background 0.12s, border-color 0.12s; user-select: none;
+  transition: background 0.12s, border-color 0.12s; user-select: none; touch-action: none;
 }
 .desktop-icon:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
 .desktop-icon.selected { background: rgba(139,92,246,0.25); border-color: rgba(139,92,246,0.4); }

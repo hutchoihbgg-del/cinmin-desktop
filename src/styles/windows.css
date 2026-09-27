@@ -118,6 +118,11 @@
 .notepad-debug-output.hidden { display: none; }
 .notepad-debug-output.error { background: #fef2f2; color: #991b1b; }
 .notepad-debug-output.success { background: #f0fdf4; color: #166534; }
+.win-resize-handle { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: se-resize; background: transparent; }
+.win-resize-handle::after { content: ''; position: absolute; right: 3px; bottom: 3px; width: 8px; height: 8px; border-right: 2px solid rgba(255,255,255,0.3); border-bottom: 2px solid rgba(255,255,255,0.3); border-radius: 0 0 4px 0; }
+.window.resizing { user-select: none; }
+.sys-btn { padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.08); color: white; cursor: pointer; font-size: 11px; }
+.sys-btn.danger { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.3); }
 [data-animations="false"] .window { animation: none !important; transition: none !important; }
 [data-animations="false"] .window.closing,
 [data-animations="false"] .window.opening,

@@ -42,6 +42,11 @@ export class WindowManager {
     `;
     const contentWrap = win.querySelector('.window-content');
     contentWrap.appendChild(contentEl);
+    // resize handles (Chromebook polish) — simple SE handle
+    const handle = document.createElement('div');
+    handle.className = 'win-resize-handle';
+    handle.title = 'Resize';
+    win.appendChild(handle);
 
     this.container.appendChild(win);
     // remove opening class after animation
@@ -148,6 +153,37 @@ export class WindowManager {
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+
+    // resize (touch + mouse)
+    const handle = win.querySelector('.win-resize-handle');
+    if (handle) {
+      let resizing=false, startX=0, startY=0, startW=0, startH=0;
+      const onPointerMove = (e) => {
+        if(!resizing) return;
+        let nw = startW + (e.clientX - startX);
+        let nh = startH + (e.clientY - startY);
+        nw = Math.max(320, Math.min(nw, window.innerWidth - parseInt(win.style.left,10) - 8));
+        nh = Math.max(200, Math.min(nh, window.innerHeight - parseInt(win.style.top,10) - 8));
+        win.style.width = nw + 'px';
+        win.style.height = nh + 'px';
+        e.preventDefault();
+      };
+      const onPointerUp = () => {
+        if(resizing){ resizing=false; handle.style.cursor=''; win.classList.remove('resizing'); }
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+      };
+      handle.addEventListener('pointerdown', (e)=>{
+        if(entry.maximized) return;
+        resizing=true; startX=e.clientX; startY=e.clientY; startW=win.offsetWidth; startH=win.offsetHeight;
+        handle.setPointerCapture(e.pointerId);
+        win.classList.add('resizing');
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        e.preventDefault();
+      });
+      handle.style.touchAction='none';
+    }
 
     // double click title bar to maximize (also single dblclick on titlebar itself)
     titlebar.addEventListener('dblclick', (e) => {
