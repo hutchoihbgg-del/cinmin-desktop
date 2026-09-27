@@ -1,21 +1,34 @@
 # Cinmin Desktop
 
-A beginner-friendly simulated desktop environment that runs as a web app. Feels like a small OS — wallpaper, icons, windows, taskbar, start menu, file explorer, notepad, terminal, and settings.
+> **Try it now:** `https://hutchoihbgg-del.github.io/cinmin-desktop/` · Netlify · Vercel — *YukiOS-like, no install*
 
-Built with just **HTML, CSS, and JavaScript** (Vite for dev server). No frameworks, no overengineering.
+A browser-native desktop hypervisor — purple Linux Mint style — running entirely in vanilla JS. Like **YukiOS**, it's a single tab OS: window manager, App Registry, virtual filesystem, Trash, plugins, all persistent client-side.
+
+Built with just **HTML, CSS, and JavaScript** (Vite). No frameworks, no overengineering. Compiles to static `dist/` for Netlify/Vercel/GitHub Pages.
 
 > Theme: **Purple Linux Mint** — exact replica of the screenshot (purple wave wallpaper + Mint LM logo, 4 left desktop icons, Mint Cinnamon menu). Locked at 0.4.
 
-## Install & Run
+## Live Website (like YukiOS)
+
+Cinmin is a **static site** — deploy like YukiOS:
+
+| Host | How |
+|------|-----|
+| **GitHub Pages** | Push to `main` → `.github/workflows/deploy.yml` auto-builds → `https://hutchoihbgg-del.github.io/cinmin-desktop/` (enable Pages: Settings → Pages → Source: GitHub Actions) |
+| **Netlify** | Drag `dist/` or connect repo — `_redirects` handles SPA routing |
+| **Vercel** | `vercel --prod` or import repo |
+| **Cloudflare Pages** | Connect repo, build `npm run build`, output `dist` |
+
+Build locally:
 
 ```bash
 git clone https://github.com/hutchoihbgg-del/cinmin-desktop.git
 cd cinmin-desktop
 npm install
-npm run dev
+npm run dev     # local
+npm run build   # → dist/ (deploy this)
+npm run preview # preview prod build
 ```
-
-Open `http://localhost:5173`. `Ctrl+C` to stop.
 
 ## Features (0.8 — Plugin Ecosystem)
 
