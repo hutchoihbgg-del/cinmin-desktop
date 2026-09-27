@@ -99,6 +99,8 @@ export class PluginManager {
       return res;
     }
     notifier.success(`${entry.name} installed`, 'Plugins');
+    bus.emit('plugin:installed', { id: key });
+    bus.emit('plugin:loaded', { id: key });
     return { ok: true, plugin: entry };
   }
 
@@ -113,6 +115,8 @@ export class PluginManager {
     storage.set(STORE_DISABLED, this.disabled);
     storage.set(STORE_FAILED, [...this.failed]);
     notifier.success(`${key} removed`, 'Plugins');
+    bus.emit('plugin:removed', { id: key });
+    bus.emit('plugin:unloaded', { id: key });
     return { ok: true };
   }
 
@@ -131,10 +135,12 @@ export class PluginManager {
       this.loaded.set(key, mod);
       this.failed.delete(key);
       storage.set(STORE_FAILED, [...this.failed]);
+      bus.emit('plugin:loaded', { id: key });
       return { ok: true };
     } catch (e) {
       this.failed.add(key);
       storage.set(STORE_FAILED, [...this.failed]);
+      bus.emit('plugin:failed', { id: key, error: e.message || String(e) });
       this._showFailure(key, e, entry);
       return { ok: false, error: e.message || String(e) };
     }
@@ -177,6 +183,7 @@ export class PluginManager {
     this.disabled = this.disabled.filter(x => x !== key);
     storage.set(STORE_DISABLED, this.disabled);
     this.failed.delete(key);
+    bus.emit('plugin:enabled', { id: key });
     return this.load(key);
   }
 
@@ -186,6 +193,8 @@ export class PluginManager {
     await this.unload(key);
     if (!this.disabled.includes(key)) this.disabled.push(key);
     storage.set(STORE_DISABLED, this.disabled);
+    bus.emit('plugin:disabled', { id: key });
+    bus.emit('plugin:unloaded', { id: key });
     return { ok: true };
   }
 
@@ -292,6 +301,10 @@ export class PluginManager {
   }
 
   helpFor(cmd) { return this.commandHooks.get(cmd.toLowerCase())?.help || null; }
+
+  listCommands() {
+    return [...this.commandHooks.entries()].map(([name, h]) => ({ name, help: h.help || '', pluginId: h.pluginId || '' }));
+  }
 
   getFileAssoc(ext) { return this.fileAssoc.get(ext.toLowerCase()) || null; }
 

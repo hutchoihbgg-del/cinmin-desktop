@@ -13,10 +13,23 @@ import { initDesktop } from './desktop/Desktop.js';
 
 // first-run migration (1.2): never wipe existing keys, just stamp schema version
 try {
-  const SCHEMA = '1.2.0';
+  const SCHEMA = '1.3.0';
   const cur = localStorage.getItem('cinmin:appSchemaVersion');
-  if (!cur) localStorage.setItem('cinmin:appSchemaVersion', SCHEMA);
-  else if (cur !== SCHEMA) localStorage.setItem('cinmin:appSchemaVersion', SCHEMA);
+  if (cur !== SCHEMA) {
+    // additive only — never wipe cinmin:fs, iconPos, recent, plugins, notifications, bookmarks
+    localStorage.setItem('cinmin:appSchemaVersion', SCHEMA);
+    // seed a sample .capp for the Chromebook install test (only if Downloads exists and file missing)
+    import('./core/FileSystem.js').then(({ fs }) => {
+      try {
+        if (fs._getFolder('/Home/Downloads') && !fs.exists('/Home/Downloads/MyNotes.capp')) {
+          fs.createFile('/Home/Downloads', 'MyNotes.capp', JSON.stringify({
+            manifest: { id: 'mynotes', name: 'My Notes', version: '1.0.0', description: 'Sample packaged notes app.', author: 'Cinmin', icon: '🗒', category: 'Accessories', entry: 'app.js', permissions: [] },
+            app: { type: 'notes', content: 'Welcome to My Notes — a sample .capp package.\n\nUninstall anytime from Software Manager.' }
+          }, null, 2));
+        }
+      } catch {}
+    }).catch(() => {});
+  }
 } catch {}
 // per-app isolated storage helper: cinmin:app:<id>:<key>
 window.cinminAppStore = (id) => ({

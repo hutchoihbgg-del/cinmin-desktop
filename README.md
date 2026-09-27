@@ -59,8 +59,8 @@ Preloaded on first boot — no install, no download, work offline. Source: `src/
 - Builtins show **Included** in Software Manager (no Install button).
 - Plugin apps show `source: "plugin"`; builtins `source: "builtin"`. Plugin registering a builtin ID is rejected: `App ID already reserved by built-in application.`
 - Per-app storage: `cinmin:app:<id>:<key>` via the Storage wrapper.
-- Schema migration: `cinmin:appSchemaVersion` (1.2.0) — existing `cinmin:fs`, `cinmin:iconPos`, `cinmin:recent`, `cinmin:plugins` are never wiped.
-- Future: `apps/<name>/manifest.json + app.js` bundles and `.capp` packages will plug into the same registry.
+- Schema migration: `cinmin:appSchemaVersion` (1.3.0) — existing `cinmin:fs`, `cinmin:iconPos`, `cinmin:recent`, `cinmin:plugins`, `cinmin:notifications`, `cinmin:bookmarks` are never wiped.
+- `.capp` packages: see below. Sample `MyNotes.capp` is seeded into `/Home/Downloads` on upgrade.
 
 ## Native Applications
 
@@ -70,9 +70,38 @@ Preloaded on first boot — no install, no download, work offline. Source: `src/
 - Requires compatible Linux + Flatpak + the referenced remote.
 - Web Vish (`src/apps/builtin/Vish.js`) is the offline-safe frontend inside Cinmin.
 
-## Features (1.2 — Preloaded Apps + 0.8 Plugin Ecosystem)
+## App Packages (.capp) — 1.3
 
-- **App Registry** (`src/core/AppRegistry.js`): Single manifest, `getApp/listApps`, Start Menu queries it
+A `.capp` file is JSON in the virtual FS:
+
+```json
+{
+  "manifest": {
+    "id": "mynotes", "name": "My Notes", "version": "1.0.0",
+    "description": "Sample packaged notes app.", "author": "Cinmin",
+    "icon": "🗒", "category": "Accessories", "entry": "app.js", "permissions": []
+  },
+  "app": { "type": "notes", "content": "Welcome..." }
+}
+```
+
+App types: `text`, `html` (sandboxed iframe), `notes`. No code execution — the entry picks a safe renderer.
+
+- Install: Software Manager → Install Local App → pick `/Home/Downloads/MyApp.capp` (validated; failures show the reason). API: `AppPackageManager.install/installFromPath/uninstall/validate/getPackageInfo/isInstalled/listInstalled`.
+- Collisions rejected: builtin IDs (`Cannot install package. ID "calculator" is reserved…`), plugin app IDs, duplicates. Path traversal and bad IDs rejected.
+- Metadata in `cinmin:packages`, per-app data in `cinmin:app:<id>:` (kept on uninstall unless "Delete application data" is checked).
+- Uninstall dialog: `[ Cancel ] [ Remove ]` + `☐ Delete application data` (default: keep).
+- `latestVersion`/`updateAvailable` prepared; remote updates disabled.
+
+## Vish 1.3
+
+Local notes app — notes with folders (tags), title/content/tag search, timestamps, 400ms autosave (`Saved`/`Saving...`), all in `cinmin:app:vish:`, offline. Double-click a note to delete (with confirm).
+
+## Features (1.3 — App Packages + 0.8 Plugin Ecosystem)
+
+- **App Registry** (`src/core/AppRegistry.js`): `getApp/listApps/getBuiltinApps/getPluginApps/getPackageApps/getAppsByCategory/getAppsBySource/searchApps`, Start Menu + Software Manager query it
+- **Live Software Manager:** subscribes to `plugin:installed/removed/enabled/disabled/failed/loaded/unloaded` + `package:*` — Terminal `plugin install COWSAY` updates an open Manager instantly; sections Installed/Built-in/Plugins/Packages with details (Name/Icon/Version/Source/Description/Author/Category/Permissions/Status)
+- **Start Menu search:** name + description + category + terminal/plugin commands; Enter launches best match; right-click favorites (`cinmin:favorites`, auto-pruned); recent deduped, max 5, tracks builtin/plugin/package
 - **Notifications:** `success/info/warning/error` (✓/i/⚠/×), unread badge, per-item remove, persisted
 - **Virtual FS + Trash:** `trash/restore/emptyTrash`, `stat()` with dates, persisted via `Storage` wrapper
 - **Desktop/Explorer/Browser/Terminal/Notepad/Settings:** All 0.5/0.6 features preserved

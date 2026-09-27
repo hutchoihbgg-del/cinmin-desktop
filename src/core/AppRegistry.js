@@ -39,3 +39,40 @@ export function unregisterApp(id) {
   if (APPS[id]?.builtin) throw new Error(`Cannot unregister built-in app: ${id}`);
   delete APPS[id];
 }
+
+// 1.3 query helpers — Start Menu and Software Manager use these, never rebuild lists
+export function getAppsByCategory(cat) {
+  const c = String(cat).toLowerCase();
+  return listApps().filter(a => (a.cat || a.category || '').toLowerCase() === c);
+}
+export function getAppsBySource(source) {
+  return listApps().filter(a => a.source === source);
+}
+export function getPluginApps() { return getAppsBySource('plugin'); }
+export function getPackageApps() { return getAppsBySource('package'); }
+export function searchApps(q) {
+  const s = String(q || '').toLowerCase().trim();
+  if (!s) return listApps();
+  return listApps().filter(a =>
+    (a.title || '').toLowerCase().includes(s) ||
+    (a.name || '').toLowerCase().includes(s) ||
+    (a.description || '').toLowerCase().includes(s) ||
+    (a.category || '').toLowerCase().includes(s) ||
+    (a.cat || '').toLowerCase().includes(s)
+  );
+}
+
+// Package apps (1.3 .capp) — same collision rules as plugins
+export function registerPackageApp(packageId, appDef) {
+  if (APPS[appDef.id]?.builtin) {
+    throw new Error(`Cannot install package. ID "${appDef.id}" is reserved by a built-in application.`);
+  }
+  if (APPS[appDef.id] && APPS[appDef.id].source === 'plugin') {
+    throw new Error(`Cannot install package. ID "${appDef.id}" is already used by a plugin application.`);
+  }
+  if (APPS[appDef.id] && APPS[appDef.id].source === 'package') {
+    throw new Error(`Package app "${appDef.id}" is already installed.`);
+  }
+  APPS[appDef.id] = { ...appDef, builtin: false, source: 'package', packageId };
+  return APPS[appDef.id];
+}

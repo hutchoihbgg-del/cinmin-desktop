@@ -3,6 +3,7 @@
 import { events } from '../core/EventBus.js';
 import { fs } from '../core/FileSystem.js';
 import { listApps, getApp } from '../core/AppRegistry.js';
+import { pluginManager } from '../core/PluginManager.js';
 
 // Desktop shortcuts (persisted positions, never reset on update)
 const ICONS = [
@@ -15,9 +16,10 @@ const ICONS = [
 
 // Start Menu reads AppRegistry (single source of truth)
 function registryMenuItems() {
+  const seen = new Set();
   return listApps()
-    .filter(a => a.id !== 'browser' || true) // keep both browser/htmlviewer
-    .map(a => ({ name: a.title === 'File Explorer' ? 'Files' : a.title, cat: (a.cat || 'other').toLowerCase(), icon: a.icon, app: a.id }));
+    .filter(a => !(a.aliasOf && seen.has(a.aliasOf)) && (seen.add(a.aliasOf || a.id), true))
+    .map(a => ({ name: a.title === 'File Explorer' ? 'Files' : (a.title || a.name), desc: a.description || '', cat: (a.cat || a.category || 'other').toLowerCase(), icon: a.icon, app: a.id }));
 }
 
 export function initDesktop() {
@@ -125,14 +127,36 @@ export function initDesktop() {
       if(child.type==='folder') walkFiles(child, p, out);
     }
   }
+  // favorites (builtin/plugin/package) — auto-pruned when app disappears
+  function loadFavs() { try { const v = JSON.parse(localStorage.getItem('cinmin:favorites') || '[]'); return Array.isArray(v) ? v.filter(id => getApp(id)) : []; } catch { return []; } }
+  function pruneFavs() { try { localStorage.setItem('cinmin:favorites', JSON.stringify(loadFavs())); } catch {} }
+  function toggleFav(id) {
+    let favs = loadFavs();
+    favs = favs.includes(id) ? favs.filter(f => f !== id) : [...favs, id];
+    try { localStorage.setItem('cinmin:favorites', JSON.stringify(favs)); } catch {}
+  }
+
   function renderMintApps(){
     appsEl.innerHTML='';
+    pruneFavs();
     const MINT_APPS = registryMenuItems();
+    const q = searchQuery.toLowerCase();
+    // search across name + description + category (registry data)
+    const matchText = (a) => {
+      if (!searchQuery) return true;
+      return [a.name, a.desc || '', a.cat || ''].join(' ').toLowerCase().includes(q);
+    };
     let list = MINT_APPS.filter(a => {
       const matchCat = activeCat==='all' || a.cat===activeCat || (activeCat==='recent' && false);
-      const matchSearch = !searchQuery || a.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCat && matchSearch;
+      return matchCat && matchText(a);
     });
+    // plugin/terminal command hits (e.g. "calc" -> Calculator's calc command)
+    let cmdHits = [];
+    if (searchQuery && searchQuery.length >= 2) {
+      const cmds = pluginManager.listCommands ? pluginManager.listCommands() : [];
+      const builtinCmds = ['ls', 'cd', 'mkdir', 'touch', 'rm', 'cp', 'mv', 'cat', 'echo', 'clear', 'help'].map(c => ({ name: c, pluginId: 'terminal' }));
+      cmdHits = [...builtinCmds, ...cmds].filter(c => c.name.includes(q)).slice(0, 4);
+    }
     // Recent pseudo-category: show trackRecent apps
     if(activeCat==='recent'){
       let ids=[]; try{ids=JSON.parse(localStorage.getItem('cinmin:recent')||'[]')}catch{}
@@ -156,16 +180,38 @@ export function initDesktop() {
       const all=[]; walkFiles(fs.root, '/Home', all);
       fileHits = all.filter(f=> f.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0,6);
     }
-    if(list.length===0 && fileHits.length===0){ noResults.classList.remove('hidden'); return; }
+    if(list.length===0 && fileHits.length===0 && cmdHits.length===0){ noResults.classList.remove('hidden'); return; }
     noResults.classList.add('hidden');
+    // Enter launches best match: first app, else first command (terminal), else first file
+    startMenu._bestMatch = list[0] ? { type: 'app', app: list[0].app }
+      : cmdHits[0] ? { type: 'cmd' }
+      : fileHits[0] ? { type: 'file', f: fileHits[0] } : null;
     list.forEach(item=>{
       const btn=document.createElement('button');
       btn.className='mint-app';
-      btn.innerHTML=`<span class="mint-app-icon">${item.icon}</span> ${item.name}`;
+      const fav = loadFavs().includes(item.app) ? ' ★' : '';
+      btn.innerHTML=`<span class="mint-app-icon">${item.icon}</span> ${item.name}${fav ? `<small style="opacity:0.5">${fav}</small>` : ''}`;
       btn.addEventListener('click',()=>{
         startMenu.classList.add('hidden');
         events.emit('app:launch', item.app);
         trackRecent(item.app);
+      });
+      btn.addEventListener('contextmenu', (e)=>{
+        e.preventDefault();
+        toggleFav(item.app);
+        renderMintApps();
+      });
+      btn.title = 'Right-click to favorite';
+      appsEl.appendChild(btn);
+    });
+    cmdHits.forEach(c=>{
+      const btn=document.createElement('button');
+      btn.className='mint-app';
+      btn.innerHTML=`<span class="mint-app-icon">⌨</span> ${c.name} <small style="opacity:0.5; margin-left:auto">terminal</small>`;
+      btn.addEventListener('click',()=>{
+        startMenu.classList.add('hidden');
+        events.emit('app:launch', 'terminal');
+        trackRecent('terminal');
       });
       appsEl.appendChild(btn);
     });
@@ -193,6 +239,20 @@ export function initDesktop() {
     });
   });
   searchInput?.addEventListener('input',()=>{ searchQuery=searchInput.value; renderMintApps(); });
+  searchInput?.addEventListener('keydown',(e)=>{
+    if(e.key!=='Enter') return;
+    const best = startMenu._bestMatch;
+    if(!best) return;
+    startMenu.classList.add('hidden');
+    if(best.type==='app'){ events.emit('app:launch', best.app); trackRecent(best.app); }
+    else if(best.type==='cmd'){ events.emit('app:launch', 'terminal'); trackRecent('terminal'); }
+    else if(best.type==='file'){
+      const f=best.f;
+      if(f.type==='folder') events.emit('app:launch','explorer');
+      else if(f.name.endsWith('.html')) events.emit('html:open', f.path);
+      else events.emit('file:open', f.path);
+    }
+  });
   // taskbar quick icons
   document.querySelectorAll('.task-icon').forEach(btn=>{
     btn.addEventListener('click',()=>{ events.emit('app:launch', btn.dataset.app); trackRecent(btn.dataset.app); });
