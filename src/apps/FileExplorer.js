@@ -44,11 +44,14 @@ export function createFileExplorerContent() {
       status.textContent = `Not found: ${path}`;
       return;
     }
-    // if it's a file, try to open with notepad (emit)
+    // if it's a file, open with appropriate app
     const { node } = fs._resolve(path);
     if (node && node.type === 'file') {
-      // emit open file
-      import('../core/EventBus.js').then(({ events }) => events.emit('file:open', path));
+      if (node.name.endsWith('.html') || node.name.endsWith('.htm')) {
+        import('../core/EventBus.js').then(({ events }) => events.emit('html:open', path));
+      } else {
+        import('../core/EventBus.js').then(({ events }) => events.emit('file:open', path));
+      }
       return;
     }
     if (pushHistory && currentPath !== path) {
@@ -71,7 +74,8 @@ export function createFileExplorerContent() {
     for (const item of items) {
       const el = document.createElement('button');
       el.className = 'file-item';
-      el.innerHTML = `<span class="file-icon">${item.type === 'folder' ? '📁' : '📄'}</span><span class="file-name">${item.name}</span>`;
+      const isHtml = item.name.endsWith('.html') || item.name.endsWith('.htm');
+      el.innerHTML = `<span class="file-icon">${item.type === 'folder' ? '📁' : isHtml ? '🌐' : '📄'}</span><span class="file-name">${item.name}</span>`;
       // click to select, dblclick to open
       el.addEventListener('dblclick', () => {
         const next = currentPath.replace(/\/$/, '') + '/' + item.name;

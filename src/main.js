@@ -11,6 +11,7 @@ import { createFileExplorerContent } from './apps/FileExplorer.js';
 import { createNotepadContent } from './apps/Notepad.js';
 import { createTerminalContent } from './apps/Terminal.js';
 import { createSettingsContent } from './apps/Settings.js';
+import { createHtmlViewerContent } from './apps/HtmlViewer.js';
 
 // apply saved theme/accent early
 const savedTheme = localStorage.getItem('cinmin:theme') || 'dark';
@@ -29,6 +30,7 @@ const appFactories = {
   explorer: () => ({ title: 'File Explorer', icon: '📁', content: createFileExplorerContent(), width: 720, height: 460 }),
   terminal: () => ({ title: 'Terminal', icon: '💻', content: createTerminalContent(), width: 620, height: 400 }),
   notepad: () => ({ title: 'Notepad', icon: '📝', content: createNotepadContent(), width: 600, height: 420 }),
+  htmlviewer: () => ({ title: 'Browser', icon: '🌐', content: createHtmlViewerContent(), width: 800, height: 520 }),
   settings: () => ({ title: 'Settings', icon: '⚙', content: createSettingsContent(), width: 560, height: 480 }),
 };
 
@@ -45,6 +47,10 @@ function launch(appId, payload) {
     opts.content = createNotepadContent(payload);
     opts.title = `Notepad — ${payload.split('/').pop()}`;
   }
+  if (appId === 'htmlviewer' && payload && typeof payload === 'string') {
+    opts.content = createHtmlViewerContent(payload);
+    opts.title = `Browser — ${payload.split('/').pop()}`;
+  }
   opts.x = 70 + offset;
   opts.y = 50 + offset;
   return wm.create(opts);
@@ -52,6 +58,7 @@ function launch(appId, payload) {
 
 events.on('app:launch', (appId) => launch(appId));
 events.on('file:open', (path) => launch('notepad', path));
+events.on('html:open', (path) => launch('htmlviewer', path));
 
 initDesktop();
 

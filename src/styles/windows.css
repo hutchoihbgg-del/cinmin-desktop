@@ -72,3 +72,21 @@
 .term-input-line { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 .term-prompt { color: #58a6ff; font-size: 13px; white-space: nowrap; }
 .term-input { flex: 1; background: transparent; border: none; outline: none; color: #c9d1d9; font-family: inherit; font-size: 13px; }
+
+/* Browser / HtmlViewer */
+.htmlviewer { display: flex; flex-direction: column; flex: 1; min-height: 0; background: #f1f5f9; }
+.browser-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px; background: var(--glass); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.b-btn { padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--glass); color: var(--text); cursor: pointer; font-size: 13px; }
+.b-btn:hover { background: var(--glass-strong); }
+.browser-address { flex: 1; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.12); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; }
+[data-theme="light"] .browser-address { background: rgba(255,255,255,0.7); }
+.addr-icon { font-size: 14px; }
+.addr-input { flex: 1; border: none; outline: none; background: transparent; color: var(--text); font-size: 13px; font-family: 'Inter', sans-serif; }
+.browser-viewport { flex: 1; position: relative; background: white; overflow: hidden; display: flex; }
+.browser-frame { flex: 1; width: 100%; height: 100%; border: none; background: white; }
+.browser-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #334155; text-align: center; padding: 24px; }
+.browser-placeholder .hint { font-size: 12px; opacity: 0.7; line-height: 1.5; }
+.browser-placeholder code { background: #e2e8f0; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+.browser-error { position: absolute; inset: 0; display: grid; place-items: center; background: #fef2f2; color: #991b1b; padding: 24px; text-align: center; font-size: 13px; }
+.browser-error.hidden { display: none; }
+.browser-status { padding: 5px 10px; font-size: 11px; opacity: 0.6; border-top: 1px solid var(--border); background: var(--glass); color: var(--text); }

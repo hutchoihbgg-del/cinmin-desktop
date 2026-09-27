@@ -6,6 +6,7 @@ const ICONS = [
   { id: 'explorer', label: 'File Explorer', icon: '📁' },
   { id: 'terminal', label: 'Terminal', icon: '💻' },
   { id: 'notepad', label: 'Notepad', icon: '📝' },
+  { id: 'htmlviewer', label: 'Browser', icon: '🌐' },
   { id: 'settings', label: 'Settings', icon: '⚙' },
 ];
 
