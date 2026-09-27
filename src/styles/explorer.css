@@ -1,10 +1,16 @@
 /* explorer.css */
 
 .explorer { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.explorer-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px; background: var(--glass); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.explorer-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px; background: var(--glass); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
 .exp-btn { padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--glass); color: var(--text); cursor: pointer; font-size: 13px; }
 .exp-btn:hover { background: var(--glass-strong); }
-.pathbar { flex: 1; }
+.exp-btn:disabled { opacity: 0.4; cursor: default; }
+.breadcrumbs { display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: rgba(0,0,0,0.08); border: 1px solid var(--border); border-radius: 7px; font-size: 12px; overflow: hidden; flex-shrink: 0; }
+[data-theme="light"] .breadcrumbs { background: rgba(255,255,255,0.6); }
+.crumb { background: transparent; border: none; color: var(--text); cursor: pointer; padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+.crumb:hover { background: var(--glass); }
+.crumb-sep { opacity: 0.4; font-size: 10px; }
+.pathbar { flex: 1; min-width: 120px; }
 .path-input { width: 100%; padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border); background: rgba(0,0,0,0.15); color: var(--text); font-size: 13px; outline: none; }
 [data-theme="light"] .path-input { background: rgba(255,255,255,0.6); }
 .explorer-body { display: flex; flex: 1; min-height: 0; }

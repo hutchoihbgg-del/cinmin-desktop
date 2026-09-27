@@ -24,15 +24,29 @@
           <div class="start-logo">◈ CINMIN</div>
           <div class="start-subtitle">Desktop Environment</div>
         </div>
-        <div class="start-apps">
+        <div class="start-search-wrap">
+          <input id="start-search" type="text" placeholder="Search apps..." autocomplete="off" />
+        </div>
+        <div class="start-apps" id="start-apps">
           <button class="start-item" data-app="explorer"><span>📁</span> File Explorer</button>
           <button class="start-item" data-app="terminal"><span>💻</span> Terminal</button>
           <button class="start-item" data-app="notepad"><span>📝</span> Notepad</button>
           <button class="start-item" data-app="htmlviewer"><span>🌐</span> Browser</button>
           <button class="start-item" data-app="settings"><span>⚙</span> Settings</button>
         </div>
+        <div id="start-recent" class="start-recent hidden">
+          <div class="start-recent-title">Recent</div>
+          <div id="start-recent-list"></div>
+        </div>
+        <div id="start-no-results" class="start-no-results hidden">No apps found</div>
         <div class="start-footer">
-          <button id="shutdown-btn" class="start-shutdown">⏻ Shut Down</button>
+          <div class="power-wrap">
+            <button id="power-btn" class="start-shutdown">⏻ Power ▴</button>
+            <div id="power-menu" class="power-menu hidden">
+              <button data-power="shutdown">⏻ Shut Down</button>
+              <button data-power="restart">↻ Restart</button>
+            </div>
+          </div>
         </div>
       </div>
 
