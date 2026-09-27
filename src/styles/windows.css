@@ -157,6 +157,13 @@
 .tray-bell { background: transparent; border: none; color: #c4b5fd; cursor: pointer; position: relative; padding: 4px 6px; font-size: 14px; }
 #notif-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 9px; padding: 1px 4px; border-radius: 8px; }
 #notif-badge.hidden { display: none; }
+.plugin-failure { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: grid; place-items: center; z-index: 350; }
+.plugin-failure-card { background: #1e1b2e; border: 1px solid rgba(239,68,68,0.3); border-radius: 12px; padding: 16px; color: #f5f3ff; min-width: 280px; display: flex; flex-direction: column; gap: 8px; }
+.pf-title { font-weight: 700; color: #f87171; }
+.pf-name { font-size: 12px; opacity: 0.8; }
+.pf-err { font-size: 11px; color: #fca5a5; word-break: break-all; }
+.pf-actions { display: flex; gap: 6px; }
+.pf-actions button { flex: 1; padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.08); color: white; cursor: pointer; font-size: 11px; }
 
 [data-icon-size="small"] .desktop-icon { width: 64px; }
 [data-icon-size="small"] .desktop-icon .d-icon { font-size: 30px; }

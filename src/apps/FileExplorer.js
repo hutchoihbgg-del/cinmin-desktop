@@ -72,7 +72,7 @@ export function createFileExplorerContent() {
     });
   }
 
-  function navigate(path, pushHistory = true) {
+  async function navigate(path, pushHistory = true) {
     if (!path.startsWith('/')) path = '/Home/' + path;
     // normalize double slashes
     path = path.replace(/\/+/g, '/').replace(/\/$/, '') || '/Home';
@@ -86,6 +86,21 @@ export function createFileExplorerContent() {
     }
     const { node } = fs._resolve(path);
     if (node && node.type === 'file') {
+      // check plugin file associations first
+      const ext = '.' + node.name.split('.').pop().toLowerCase();
+      try {
+        const { pluginManager } = await import('../core/PluginManager.js');
+        const assoc = pluginManager.getFileAssoc(ext);
+        if (assoc) {
+          const { events } = await import('../core/EventBus.js');
+          // for markdown, launch its app; fallback to notepad/html
+          if (assoc.appId === 'markdown') {
+            const { getApp } = await import('../core/AppRegistry.js');
+            const app = getApp(assoc.appId);
+            if (app) { events.emit('app:launch', assoc.appId); return; }
+          }
+        }
+      } catch {}
       if (node.name.endsWith('.html') || node.name.endsWith('.htm')) {
         import('../core/EventBus.js').then(({ events }) => events.emit('html:open', path));
       } else {

@@ -70,23 +70,49 @@ export function createTerminalContent() {
         const plugHelp = pluginManager.helpFor(lower);
         if (plugHelp) { print(plugHelp); return; }
       }
-      print('Available commands:');
+      print('Built-in Commands');
       print('  help, clear, ls [-l], cd, pwd, mkdir, touch, cat, echo, rm, cp, mv, whoami, date');
       print('  Aliases: dir→ls, cls→clear, del→rm, copy→cp, move→mv');
-      print('  Plugins: plugin list | plugin install <name> | plugin remove <name>');
-      print('  Try: help cp  or  plugin list');
+      print('');
+      print('Plugin Commands');
+      const avail = pluginManager.listPlugins().filter(p=> pluginManager.isEnabled(p.id));
+      // collect plugin command names from hooks
+      const plugCmds = [...pluginManager.commandHooks.keys()];
+      if (plugCmds.length) plugCmds.forEach(c=> print(`  ${c}`));
+      else print('  (no plugin commands — try: plugin install HTMLDEBUG)');
+      print('');
+      print('Try: help cp  |  help cowsay  |  plugin list');
     },
     plugin(args) {
       const sub = (args[0] || 'help').toLowerCase();
       if (sub === 'list') {
-        const cat = pluginManager.listCatalog();
-        print('Catalog:');
-        cat.forEach(p => {
-          const inst = pluginManager.isInstalled(p.id) ? ' [installed]' : '';
-          print(`  ${p.id} — ${p.description}${inst}`);
+        const all = pluginManager.listPlugins();
+        print('Installed Plugins');
+        print('─'.repeat(20));
+        const inst = all.filter(p=> p.status==='installed' || p.status==='disabled' || p.status==='failed');
+        if (inst.length===0) print('  (none)');
+        inst.forEach(p=>{
+          const icon = p.status==='installed' ? '✓' : p.status==='failed' ? '×' : '○';
+          const extra = p.status==='disabled' ? ' [disabled]' : p.status==='failed' ? ' [failed]' : '';
+          print(`  ${icon} ${p.id.padEnd(12)} ${p.version}${extra}`);
         });
-        const inst = pluginManager.listInstalled();
-        print(inst.length ? `Installed: ${inst.join(', ')}` : 'No plugins installed. Try: plugin install HTMLDEBUG');
+        print('');
+        print('Available:');
+        const avail = all.filter(p=> p.status==='available');
+        if (avail.length===0) print('  (none)');
+        avail.forEach(p=> print(`  ○ ${p.id.padEnd(12)} ${p.version} — ${p.description}`));
+        return;
+      }
+      if (sub === 'info' && args[1]) {
+        const p = pluginManager.getPlugin(args[1]);
+        if (!p) { print(`plugin info: not found: ${args[1]}`, 'error'); return; }
+        const st = pluginManager.listPlugins().find(x=>x.id===p.id)?.status || 'unknown';
+        print(`${p.name}`);
+        print(`Version: ${p.version}`);
+        print(`Description:\n  ${p.description}`);
+        print(`Commands:\n  ${(p.commands||[]).join(', ') || '(none)'}`);
+        print(`Permissions:\n  ${(p.permissions||[]).join(', ') || 'none'}`);
+        print(`Status:\n  ${st}`);
         return;
       }
       if (sub === 'install' && args[1]) {
@@ -94,7 +120,7 @@ export function createTerminalContent() {
         print(`Installing ${id}...`);
         pluginManager.install(id).then(r => {
           if (!r.ok) print(`plugin: ${r.error}`, 'error');
-          else print(`✓ ${id} installed. Try: htmldebug /Home/index.html`, 'success');
+          else print(`✓ ${id} installed.`, 'success');
         });
         return;
       }
@@ -105,9 +131,21 @@ export function createTerminalContent() {
         });
         return;
       }
-      print('Usage: plugin list | plugin install <NAME> | plugin remove <NAME>');
-      print('  Available: HTMLDEBUG, COWSAY');
-      print('  Example: plugin install HTMLDEBUG');
+      if (sub === 'enable' && args[1]) {
+        pluginManager.enable(args[1]).then(r=> print(r.ok? `Enabled ${args[1]}` : `plugin: ${r.error}`, r.ok?'success':'error'));
+        return;
+      }
+      if (sub === 'disable' && args[1]) {
+        pluginManager.disable(args[1]).then(r=> print(r.ok? `Disabled ${args[1]}` : `plugin: ${r.error}`, r.ok?'success':'error'));
+        return;
+      }
+      if (sub === 'reload' && args[1]) {
+        print(`Reloading ${args[1]}...`);
+        pluginManager.reload(args[1]).then(r=> print(r.ok? `Reloaded ${args[1]}` : `plugin: ${r.error}`, r.ok?'success':'error'));
+        return;
+      }
+      print('Usage: plugin list | plugin info <NAME> | plugin install <NAME> | plugin remove <NAME> | plugin enable <NAME> | plugin disable <NAME> | plugin reload <NAME>');
+      print('  Examples: plugin install HTMLDEBUG | plugin info HTMLDEBUG | plugin disable HTMLDEBUG');
     },
     clear() { output.innerHTML = ''; },
     ls(args) {

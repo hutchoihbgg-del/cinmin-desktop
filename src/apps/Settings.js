@@ -1,6 +1,7 @@
-// Settings.js — 0.5: wallpaper, theme, accent, icon size, animations
+// Settings.js — 0.8: adds Plugins UI
 
 import { events } from '../core/EventBus.js';
+import { pluginManager } from '../core/PluginManager.js';
 
 export function createSettingsContent() {
   const wrap = document.createElement('div');
@@ -40,9 +41,14 @@ export function createSettingsContent() {
       <label><input type="checkbox" class="anim-check" checked> Enable window animations</label>
     </section>
 
+    <section class="settings-section" id="plugins-section">
+      <h3>Plugins</h3>
+      <div id="plugins-list"></div>
+    </section>
+
     <section class="settings-section">
       <h3>About</h3>
-      <p style="font-size:12px; opacity:0.7">Cinmin 0.5 — System Foundation. FS is persisted to localStorage.</p>
+      <p style="font-size:12px; opacity:0.7">Cinmin 0.8 — Plugin Ecosystem. Appearance locked at 0.4.</p>
     </section>
   `;
 
@@ -107,6 +113,47 @@ export function createSettingsContent() {
     document.documentElement.setAttribute('data-animations', String(animCheck.checked));
     events.emit('settings:changed');
   });
+
+  // plugins UI
+  function renderPlugins(){
+    const list = wrap.querySelector('#plugins-list');
+    if(!list) return;
+    list.innerHTML='';
+    const plugins = pluginManager.listPlugins();
+    plugins.forEach(p=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex; flex-direction:column; gap:6px; padding:10px; background:rgba(255,255,255,0.06); border-radius:10px; margin-bottom:8px';
+      const icon = p.id==='HTMLDEBUG' ? '🐛' : p.id==='COWSAY' ? '🐮' : p.id==='HELLOWORLD' ? '👋' : p.id==='CALCULATOR' ? '🧮' : p.id==='MARKDOWN' ? '📝' : '📦';
+      const status = p.status;
+      const statusLabel = status==='installed' ? '[ Enabled ]' : status==='disabled' ? '[ Disabled ]' : status==='failed' ? '[ Failed ]' : '[ Not installed ]';
+      row.innerHTML=`
+        <div style="font-weight:600; font-size:13px">${icon} ${p.name} <small style="opacity:0.6">${p.version}</small> <small style="float:right">${statusLabel}</small></div>
+        <div style="font-size:12px; opacity:0.7">${p.description}</div>
+        <div style="display:flex; gap:6px">
+          <button data-a="toggle">${status==='disabled' ? 'Enable' : 'Disable'}</button>
+          <button data-a="remove">Remove</button>
+          <button data-a="info">Info</button>
+        </div>
+      `;
+      const toggle=row.querySelector('[data-a="toggle"]');
+      const remove=row.querySelector('[data-a="remove"]');
+      const info=row.querySelector('[data-a="info"]');
+      // style buttons
+      [toggle,remove,info].forEach(b=> b.style.cssText='padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.08); color:white; cursor:pointer; font-size:11px');
+      toggle.addEventListener('click', async ()=>{
+        if(status==='disabled') await pluginManager.enable(p.id);
+        else if(status==='installed') await pluginManager.disable(p.id);
+        else if(status==='available') await pluginManager.install(p.id);
+        renderPlugins();
+      });
+      toggle.textContent = status==='disabled' ? 'Enable' : status==='available' ? 'Install' : status==='failed' ? 'Retry' : 'Disable';
+      if(status==='available') toggle.addEventListener('click',()=>{}, {once:true}); // already handled
+      remove.addEventListener('click', async ()=>{ if(p.status!=='available'){ await pluginManager.remove(p.id); renderPlugins(); } else alert('Not installed'); });
+      info.addEventListener('click', ()=> alert(`${p.name}\nVersion: ${p.version}\n${p.description}\nCommands: ${(p.commands||[]).join(', ')||'none'}\nStatus: ${status}`));
+      list.appendChild(row);
+    });
+  }
+  renderPlugins();
 
   return wrap;
 }
