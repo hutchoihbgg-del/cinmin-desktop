@@ -28,3 +28,4 @@
 .file-name { font-size: 12px; text-align: center; word-break: break-all; }
 .empty { grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 24px; font-size: 14px; }
 .explorer-status { padding: 6px 10px; font-size: 11px; opacity: 0.6; border-top: 1px solid var(--border); }
+.explorer-grid.drag-over { outline: 2px dashed var(--accent); outline-offset: -6px; border-radius: 10px; }

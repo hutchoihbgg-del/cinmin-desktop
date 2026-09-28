@@ -41,6 +41,16 @@ npm run preview # preview prod build
 - Abstraction: `src/core/BrowserEngine.js` exposes `createBrowserView/navigate/back/forward/reload/stop/canGoBack/canGoForward/getCurrentUrl/destroy`, `BrowserDownloads`, `cinmin://error|home|history|bookmarks`
 - Build targets: `npm run build` (web, Vercel) always works; `npm run build:native` (native, requires Electron binaries)
 
+## Real PC Files (1.4)
+
+Browsers can't browse your whole disk unasked — so Cinmin uses a **user-approved bridge** (`src/core/HostFiles.js`), no install, no permissions, no Electron needed:
+
+- **Import:** File Explorer → `⇪ Import` (or right-click → Import from PC, or **drag real files straight into the folder**). You pick files in Chrome's picker (File System Access API, `<input type=file>` fallback); they're **copied** into the virtual FS. 1MB per-file guard (virtual FS lives in localStorage).
+- **Export:** right-click any virtual file → **⇩ Download to PC** (goes through Chrome's download system).
+- Read/copy model: nothing is written back to your PC unless you export. Cinmin can never see files you didn't pick.
+
+Limits: text files work best (binary files are stored as text and may not round-trip); folders can't be picked in one go yet — select multiple files instead.
+
 ## Built-in Applications
 
 Preloaded on first boot — no install, no download, work offline. Source: `src/apps/builtin/` (bundled at build time, no runtime GitHub fetch).

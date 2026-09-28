@@ -2,6 +2,7 @@
 
 import { fs } from '../core/FileSystem.js';
 import { notifier } from '../core/NotificationManager.js';
+import { importFromPC, exportToPC, importDroppedFiles } from '../core/HostFiles.js';
 
 export function createFileExplorerContent() {
   const wrap = document.createElement('div');
@@ -15,6 +16,7 @@ export function createFileExplorerContent() {
       <div class="pathbar"><input class="path-input" value="/Home" /></div>
       <button class="exp-btn" data-action="newFolder">+ Folder</button>
       <button class="exp-btn" data-action="newFile">+ File</button>
+      <button class="exp-btn" data-action="import" title="Import real files from this PC">⇪ Import</button>
     </div>
     <div class="explorer-body">
       <div class="explorer-sidebar">
@@ -179,6 +181,7 @@ export function createFileExplorerContent() {
       <div class="ctx-sep"></div>
       <button data-action="copy">⎘ Copy</button>
       <button data-action="cut">✂ Cut</button>
+      <button data-action="export">⇩ Download to PC</button>
       <button data-action="rename">✎ Rename</button>
       <button data-action="delete" class="danger">🗑 Delete</button>
       <div class="ctx-sep"></div>
@@ -189,6 +192,14 @@ export function createFileExplorerContent() {
     menu.querySelector('[data-action="open"]').addEventListener('click', () => { menu.remove(); navigate(fullPath); });
     menu.querySelector('[data-action="copy"]').addEventListener('click', () => { fs.copy(fullPath); notifier.success(`Copied ${item.name}`, 'Files'); menu.remove(); render(); });
     menu.querySelector('[data-action="cut"]').addEventListener('click', () => { fs.cut(fullPath); notifier.success(`Cut ${item.name}`, 'Files'); menu.remove(); render(); });
+    const exportBtn = menu.querySelector('[data-action="export"]');
+    if (item.type !== 'folder') exportBtn.addEventListener('click', () => {
+      menu.remove();
+      const r = exportToPC(fullPath);
+      if (!r.ok) { alert(r.error); notifier.error(r.error, 'Files'); }
+      else notifier.success(`Downloaded ${r.name} to your PC`, 'Files');
+    });
+    else exportBtn.setAttribute('disabled', '');
     menu.querySelector('[data-action="rename"]').addEventListener('click', () => {
       menu.remove();
       const nn = prompt('New name:', item.name);
@@ -228,6 +239,7 @@ export function createFileExplorerContent() {
     menu.innerHTML = `
       <button data-action="newFolder">📁 New Folder</button>
       <button data-action="newFile">📄 New Text File</button>
+      <button data-action="import">⇪ Import from PC</button>
       <div class="ctx-sep"></div>
       <button data-action="paste" ${hasClip ? '' : 'disabled'}>⎘ Paste ${hasClip ? `(${fs.clipboard.path.split('/').pop()})` : ''}</button>
       <div class="ctx-sep"></div>
@@ -255,6 +267,13 @@ export function createFileExplorerContent() {
       const r = fs.paste(currentPath);
       menu.remove();
       if (!r.ok) { alert(r.error); notifier.error(r.error, 'Files'); } else { render(); notifier.success(`Pasted ${r.name}`, 'Files'); }
+    });
+    menu.querySelector('[data-action="import"]').addEventListener('click', async () => {
+      menu.remove();
+      const r = await importFromPC(currentPath);
+      render();
+      if (r.imported.length) notifier.success(`Imported: ${r.imported.join(', ')}`, 'Files');
+      r.errors.forEach(err => notifier.error(err, 'Files'));
     });
     menu.querySelector('[data-action="refresh"]').addEventListener('click', () => { menu.remove(); render(); });
     menu.querySelector('[data-action="props"]').addEventListener('click', () => {
@@ -303,6 +322,27 @@ export function createFileExplorerContent() {
     if (!name) return;
     const r = fs.createFile(currentPath, name, '');
     if (!r.ok) alert(r.error); else render();
+  });
+  wrap.querySelector('[data-action="import"]').addEventListener('click', async () => {
+    status.textContent = 'Pick files from your PC…';
+    const r = await importFromPC(currentPath);
+    if (r.cancelled) { render(); return; }
+    render();
+    if (r.imported.length) notifier.success(`Imported: ${r.imported.join(', ')}`, 'Files');
+    r.errors.forEach(e => notifier.error(e, 'Files'));
+    if (!r.imported.length && r.errors.length) alert(r.errors.join('\n'));
+  });
+  // OS drag-drop: drop real files from your PC straight into the folder
+  grid.addEventListener('dragover', (e) => { e.preventDefault(); grid.classList.add('drag-over'); });
+  grid.addEventListener('dragleave', () => grid.classList.remove('drag-over'));
+  grid.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    grid.classList.remove('drag-over');
+    if (!e.dataTransfer?.files?.length) return;
+    const r = await importDroppedFiles(e.dataTransfer.files, currentPath);
+    render();
+    if (r.imported.length) notifier.success(`Imported: ${r.imported.join(', ')}`, 'Files');
+    r.errors.forEach(err => notifier.error(err, 'Files'));
   });
 
   // sidebar
