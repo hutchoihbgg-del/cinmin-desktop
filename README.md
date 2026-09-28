@@ -114,7 +114,8 @@ Local notes app — notes with folders (tags), title/content/tag search, timesta
 - **Start Menu search:** name + description + category + terminal/plugin commands; Enter launches best match; right-click favorites (`cinmin:favorites`, auto-pruned); recent deduped, max 5, tracks builtin/plugin/package
 - **Notifications:** `success/info/warning/error` (✓/i/⚠/×), unread badge, per-item remove, persisted
 - **Virtual FS + Trash:** `trash/restore/emptyTrash`, `stat()` with dates, persisted via `Storage` wrapper
-- **Desktop/Explorer/Browser/Terminal/Notepad/Settings:** All 0.5/0.6 features preserved
+- **Browser (Reader Mode, 1.5):** no iframe, no proxy — external pages are fetched and rendered as local text (`sanitizeHtml`/`fetchReader` in `BrowserEngine.js`; scripts stripped, `on*` handlers + `javascript:` links removed, zero Cinmin APIs reach pages). Only CORS-permitting sites render; the rest get `Can't read this page` + Open in Chrome. `🖼` Embed view keeps the old iframe as opt-in fallback. Local `/Home` files + `cinmin://` pages render offline.
+- **Desktop/Explorer/Terminal/Notepad/Settings:** All 0.5/0.6 features preserved
 - **Plugins** (`src/core/PluginManager.js`): Manifests (`id/name/version/description/author/commands/apps/permissions/dependencies`), `getPlugin/listPlugins/isInstalled/install/remove/load/unload/enable/disable/reload`, isolated storage `cinmin:plugin:<id>:`, sandboxed context (`commands/events/notifications/apps/files/storage`), file associations (`.md`→Markdown), app registration via `WindowManager`, deps check, failure overlay (Restart/Disable/Close)
 - **Terminal plugin UX:** `plugin list` (✓ installed ○ available × failed [disabled]), `plugin info <id>`, `plugin enable/disable/reload`, `help` groups Built-in vs Plugin commands, `help cowsay`
 - **Plugin apps:** `CALCULATOR` (🧮 Calculator in Accessories, plus `calc` command), `MARKDOWN` (`.md` → Markdown Viewer)

@@ -186,6 +186,67 @@ export function createBrowserView(container, statusCb) {
   return new WebEngine(container, statusCb);
 }
 
+// Reader — no-iframe page rendering (1.5). Fetches the URL and renders
+// extracted text as local DOM. No proxy: fetch obeys CORS, so only
+// CORS-permitting sites render. Everything else → graceful blocked page.
+// NEVER injects page scripts: scripts stripped, event handlers removed,
+// javascript: links neutralized. External pages get zero Cinmin APIs.
+export function sanitizeHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script, style, noscript, template, iframe, object, embed, form').forEach(el => el.remove());
+  const walker = doc.createTreeWalker(doc.body || doc, NodeFilter.SHOW_ELEMENT);
+  const els = [];
+  while (walker.nextNode()) els.push(walker.currentNode);
+  els.forEach(el => {
+    [...el.attributes].forEach(a => {
+      if (/^on/i.test(a.name)) el.removeAttribute(a.name);
+      if ((a.name === 'href' || a.name === 'src') && /^\s*javascript:/i.test(a.value)) el.removeAttribute(a.name);
+    });
+  });
+  return { title: doc.querySelector('title')?.textContent?.trim() || '', body: doc.body ? doc.body.innerHTML : '' };
+}
+
+export async function fetchReader(url, timeoutMs = 8000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  let res;
+  try {
+    res = await fetch(url, { signal: ctrl.signal, redirect: 'follow' });
+  } catch (e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') return { ok: false, error: 'Timed out.' };
+    return { ok: false, error: 'Cannot fetch this site (CORS or network blocked).' };
+  }
+  clearTimeout(timer);
+  if (!res.ok) return { ok: false, error: `HTTP ${res.status}.` };
+  const type = res.headers.get('content-type') || '';
+  if (!/text|html|xml|json/i.test(type)) return { ok: false, error: `Not a readable page (${type.split(';')[0] || 'unknown type'}).` };
+  const text = await res.text();
+  if (type.includes('json')) return { ok: true, title: url, paragraphs: [text.slice(0, 4000)], links: [] };
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  doc.querySelectorAll('script, style, noscript, template, iframe, nav, header, footer, aside, form').forEach(el => el.remove());
+  const title = doc.querySelector('title')?.textContent?.trim() || url;
+  const paras = [];
+  doc.querySelectorAll('article p, main p, p, h1, h2, h3, li').forEach(el => {
+    const t = el.textContent.replace(/\s+/g, ' ').trim();
+    if (t.length > 40) paras.push({ tag: el.tagName.toLowerCase(), text: t.slice(0, 2000) });
+  });
+  const links = [];
+  doc.querySelectorAll('article a[href], main a[href]').forEach(a => {
+    const href = a.getAttribute('href');
+    if (!href || /^\s*javascript:/i.test(href)) return;
+    try {
+      const abs = new URL(href, url).href;
+      if (abs.startsWith('http') && !links.some(l => l.href === abs)) {
+        links.push({ href: abs, text: a.textContent.replace(/\s+/g, ' ').trim().slice(0, 80) || abs });
+      }
+    } catch {}
+    if (links.length >= 20) return;
+  });
+  if (!paras.length) return { ok: false, error: 'No readable text found on this page.' };
+  return { ok: true, title, paragraphs: paras.slice(0, 60), links: links.slice(0, 20) };
+}
+
 // Downloads abstraction — controlled, no direct FS access for webpages
 export const BrowserDownloads = {
   saveToDownloads(filename, content) {
