@@ -8,6 +8,8 @@ import { createSettingsContent } from '../Settings.js';
 import { createHtmlViewerContent } from '../HtmlViewer.js';
 import { createVishContent } from './Vish.js';
 import { createSoftwareManagerContent } from './SoftwareManager.js';
+import { createUltrakillDemoContent } from './UltrakillDemo.js';
+import { createMusicContent } from './Music.js';
 
 export const CINMIN_VERSION = '1.2.0';
 
@@ -86,6 +88,20 @@ export const BUILTIN_APPS = {
     category: 'Administration', cat: 'admin', builtin: true, source: 'builtin',
     width: 520, height: 480,
     create: () => createSoftwareManagerContent(),
+  },
+  ultrakill: {
+    id: 'ultrakill', name: 'ULTRAKILL Demo', title: 'ULTRAKILL Demo',
+    version: '1.0.0', description: 'Playable ULTRAKILL demo (own game window).', icon: '🔥',
+    category: 'Games', cat: 'media', builtin: true, source: 'builtin',
+    width: 900, height: 600,
+    create: () => createUltrakillDemoContent(),
+  },
+  music: {
+    id: 'music', name: 'Music', title: 'Music',
+    version: '1.0.0', description: 'Soundtracks — JJS + ULTRAKILL OST.', icon: '🎵',
+    category: 'Sound & Video', cat: 'media', builtin: true, source: 'builtin',
+    width: 420, height: 520,
+    create: () => createMusicContent(),
   },
   vish: {
     id: 'vish', name: 'Vish', title: 'Vish',
