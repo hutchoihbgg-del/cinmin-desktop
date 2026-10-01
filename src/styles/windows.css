@@ -109,16 +109,20 @@
 .browser-error { position: absolute; inset: 0; display: grid; place-items: center; background: #fef2f2; color: #991b1b; padding: 24px; text-align: center; font-size: 13px; }
 .browser-error.hidden { display: none; }
 .browser-status { padding: 5px 10px; font-size: 11px; opacity: 0.6; border-top: 1px solid var(--border); background: var(--glass); color: var(--text); }
-.reader-view { flex: 1; overflow-y: auto; background: white; color: #1a1f3d; display: none; padding: 0; }
-.reader-doc { max-width: 680px; margin: 0 auto; padding: 24px 20px 40px; font-family: 'Inter', sans-serif; line-height: 1.65; }
-.reader-title { font-size: 22px; margin: 0 0 4px; }
-.reader-meta { font-size: 11px; opacity: 0.5; margin-bottom: 14px; word-break: break-all; }
-.reader-body p { margin: 0 0 12px; font-size: 14px; }
-.reader-body h1, .reader-body h2, .reader-body h3 { margin: 18px 0 8px; }
+.reader-view { flex: 1; overflow-y: auto; background: #000; color: #fff; display: none; padding: 0; }
+.reader-doc { max-width: 680px; margin: 0 auto; padding: 24px 20px 40px; font-family: 'Inter', sans-serif; line-height: 1.65; background: #000; color: #fff; }
+.reader-title { font-size: 22px; margin: 0 0 4px; color: #fff; }
+.reader-meta { font-size: 11px; opacity: 0.6; margin-bottom: 14px; word-break: break-all; color: #fff; }
+.reader-body { color: #fff; }
+.reader-body p { margin: 0 0 12px; font-size: 14px; color: #fff; }
+.reader-body h1, .reader-body h2, .reader-body h3 { margin: 18px 0 8px; color: #fff; }
+.reader-body li { color: #fff; }
+.reader-body a { color: #c4b5fd; }
 .reader-body img { max-width: 100%; border-radius: 8px; }
-.reader-links { margin-top: 20px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
-.reader-links a { font-size: 13px; color: #6d28d9; margin-bottom: 6px; }
-.reader-loading { padding: 40px; text-align: center; opacity: 0.6; }
+.reader-links { margin-top: 20px; padding-top: 12px; border-top: 1px solid #333; }
+.reader-links h3 { color: #fff; }
+.reader-links a { font-size: 13px; color: #c4b5fd; margin-bottom: 6px; }
+.reader-loading { padding: 40px; text-align: center; opacity: 0.6; color: #fff; }
 
 /* 0.5 additions */
 .notepad-dirty { color: #f87171; font-size: 14px; margin-left: 6px; }
