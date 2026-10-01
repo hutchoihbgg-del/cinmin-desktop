@@ -20,14 +20,15 @@ async function readPickedFile(file) {
   return { ok: true, name: file.name, content: text };
 }
 
-// Import real files into a virtual folder. Returns { imported: [names], errors: [] }
-export async function importFromPC(destFolder) {
+// Import real files into a virtual folder, one file per picker.
+// Returns { imported: [names], errors: [] }. Pass { single: true } for one file.
+export async function importFromPC(destFolder, { single = false } = {}) {
   const imported = [];
   const errors = [];
   if (importMethod() === 'picker') {
     let handles;
     try {
-      handles = await window.showOpenFilePicker({ multiple: true });
+      handles = await window.showOpenFilePicker({ multiple: !single });
     } catch (e) {
       if (e && e.name === 'AbortError') return { imported, errors, cancelled: true };
       return { imported, errors: [String(e.message || e)] };
@@ -57,7 +58,7 @@ export async function importFromPC(destFolder) {
   // fallback: hidden file input
   return new Promise((resolve) => {
     const inp = document.createElement('input');
-    inp.type = 'file'; inp.multiple = true;
+    inp.type = 'file'; inp.multiple = !single;
     inp.style.display = 'none';
     document.body.appendChild(inp);
     inp.addEventListener('change', async () => {

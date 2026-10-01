@@ -16,7 +16,8 @@ export function createFileExplorerContent() {
       <div class="pathbar"><input class="path-input" value="/Home" /></div>
       <button class="exp-btn" data-action="newFolder">+ Folder</button>
       <button class="exp-btn" data-action="newFile">+ File</button>
-      <button class="exp-btn" data-action="import" title="Import real files from this PC">⇪ Import</button>
+      <button class="exp-btn" data-action="import" title="Import real files from this PC, one by one">⇪ Import</button>
+      <button class="exp-btn" data-action="export" title="Download the selected file to this PC">⇩ Export</button>
     </div>
     <div class="explorer-body">
       <div class="explorer-sidebar">
@@ -270,9 +271,10 @@ export function createFileExplorerContent() {
     });
     menu.querySelector('[data-action="import"]').addEventListener('click', async () => {
       menu.remove();
-      const r = await importFromPC(currentPath);
+      const r = await importFromPC(currentPath, { single: true });
+      if (r.cancelled) { render(); return; }
       render();
-      if (r.imported.length) notifier.success(`Imported: ${r.imported.join(', ')}`, 'Files');
+      if (r.imported.length) notifier.success(`Imported ${r.imported[0]}`, 'Files');
       r.errors.forEach(err => notifier.error(err, 'Files'));
     });
     menu.querySelector('[data-action="refresh"]').addEventListener('click', () => { menu.remove(); render(); });
@@ -323,14 +325,34 @@ export function createFileExplorerContent() {
     const r = fs.createFile(currentPath, name, '');
     if (!r.ok) alert(r.error); else render();
   });
+  // Import one file at a time: pick → import → ask for the next
   wrap.querySelector('[data-action="import"]').addEventListener('click', async () => {
-    status.textContent = 'Pick files from your PC…';
-    const r = await importFromPC(currentPath);
-    if (r.cancelled) { render(); return; }
+    let count = 0;
+    for (;;) {
+      status.textContent = count === 0 ? 'Pick a file from your PC…' : `Imported ${count} — pick the next file…`;
+      const r = await importFromPC(currentPath, { single: true });
+      if (r.cancelled) break;
+      render();
+      r.errors.forEach(e => notifier.error(e, 'Files'));
+      if (r.imported.length) {
+        count += r.imported.length;
+        notifier.success(`Imported ${r.imported[0]} (${count} so far)`, 'Files');
+      } else if (r.errors.length) alert(r.errors.join('\n'));
+      // one by one: stop unless the user wants another
+      if (!confirm(`Imported ${r.imported[0] || 'nothing'}.\n\nImport another file?`)) break;
+    }
     render();
-    if (r.imported.length) notifier.success(`Imported: ${r.imported.join(', ')}`, 'Files');
-    r.errors.forEach(e => notifier.error(e, 'Files'));
-    if (!r.imported.length && r.errors.length) alert(r.errors.join('\n'));
+    status.textContent = count ? `${currentPath} — imported ${count} file${count !== 1 ? 's' : ''} from PC` : currentPath;
+  });
+  // Export the selected file, one at a time
+  wrap.querySelector('[data-action="export"]').addEventListener('click', () => {
+    if (!selectedName) { alert('Select a file first, then Export.'); return; }
+    const fullPath = currentPath.replace(/\/$/, '') + '/' + selectedName;
+    const stat = fs.stat(fullPath);
+    if (!stat || stat.type !== 'file') { alert('Select a file (not a folder) to export.'); return; }
+    const r = exportToPC(fullPath);
+    if (!r.ok) { alert(r.error); notifier.error(r.error, 'Files'); }
+    else notifier.success(`Downloaded ${r.name} to your PC`, 'Files');
   });
   // OS drag-drop: drop real files from your PC straight into the folder
   grid.addEventListener('dragover', (e) => { e.preventDefault(); grid.classList.add('drag-over'); });
