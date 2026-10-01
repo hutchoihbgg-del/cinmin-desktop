@@ -7,7 +7,9 @@
 import { fs } from '../core/FileSystem.js';
 import { notifier } from '../core/NotificationManager.js';
 import { sanitizeHtml, fetchReader } from '../core/BrowserEngine.js';
+import { toScript } from '../core/FancyText.js';
 // Note: iframe embed kept only as opt-in fallback (🖼 button), never the default.
+// Headings render in 𝓥𝓸𝓲𝓬𝓮𝓞𝓿𝓮𝓻 script style; body text stays readable.
 import { storage } from '../core/Storage.js';
 
 const BOOKMARK_KEY = 'cinmin:bookmarks';
@@ -54,7 +56,7 @@ export function createHtmlViewerContent(initialPath = null) {
       <div class="reader-view"></div>
       <div class="browser-placeholder">
         <div style="font-size:32px">📖</div>
-        <div><b>Cinmin Browser</b> <small style="opacity:0.6">Reader Mode</small></div>
+        <div><b>𝓒𝓲𝓷𝓶𝓲𝓷 𝓑𝓻𝓸𝔀𝓼𝓮𝓻</b> <small style="opacity:0.6">Reader Mode</small></div>
         <div class="hint">Try: <code>example.com</code>, <code>hello world</code> (search), or <code>/Home/index.html</code></div>
         <div class="hint" style="opacity:0.7">Pages render as text — no iframes, no proxy. Sites blocking CORS show a fallback.</div>
       </div>
@@ -109,11 +111,18 @@ export function createHtmlViewerContent(initialPath = null) {
   }
   const clearOverlays = () => { errorEl.classList.add('hidden'); blockedEl.classList.add('hidden'); bookmarksPanel.classList.add('hidden'); };
 
+  function scriptHeadings(root) {
+    root.querySelectorAll('h1, h2, h3').forEach(h => {
+      if (!h.dataset.fancy) { h.textContent = toScript(h.textContent); h.dataset.fancy = '1'; }
+    });
+  }
+
   function renderReaderDoc(title, html) {
     reader.innerHTML = `<article class="reader-doc"><h1 class="reader-title"></h1><div class="reader-body"></div></article>`;
-    reader.querySelector('.reader-title').textContent = title;
+    reader.querySelector('.reader-title').textContent = toScript(title);
     // sanitized HTML only (scripts/handlers stripped by sanitizeHtml)
     reader.querySelector('.reader-body').innerHTML = html;
+    scriptHeadings(reader);
     // links open through Cinmin (fetch) instead of navigating away
     reader.querySelectorAll('a[href]').forEach(a => {
       const href = a.getAttribute('href');
@@ -129,12 +138,13 @@ export function createHtmlViewerContent(initialPath = null) {
 
   function renderExtracted(title, paragraphs, links, url) {
     reader.innerHTML = `<article class="reader-doc"><h1 class="reader-title"></h1><div class="reader-meta"></div><div class="reader-body"></div><div class="reader-links"></div></article>`;
-    reader.querySelector('.reader-title').textContent = title;
+    reader.querySelector('.reader-title').textContent = toScript(title);
     reader.querySelector('.reader-meta').textContent = url;
     const body = reader.querySelector('.reader-body');
     paragraphs.forEach(p => {
-      const el = document.createElement(p.tag.startsWith('h') ? p.tag : p.tag === 'li' ? 'li' : 'p');
-      el.textContent = p.text;
+      const isHead = p.tag.startsWith('h');
+      const el = document.createElement(isHead ? p.tag : p.tag === 'li' ? 'li' : 'p');
+      el.textContent = isHead ? toScript(p.text) : p.text;
       body.appendChild(el);
     });
     if (links.length) {
